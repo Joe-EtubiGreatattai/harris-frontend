@@ -102,7 +102,7 @@ export const TrackingPage = () => {
     if (isLoadingOrders) {
         return (
             <Center h="100vh" bg="#E53E3E" color="white" flexDirection="column">
-                <Spinner size="xl" thickness="4px" color="white" mb={4} />
+                <Spinner size="xl" color="white" mb={4} />
                 <Text fontWeight="bold">Fetching your order...</Text>
             </Center>
         )
@@ -331,7 +331,7 @@ export const TrackingPage = () => {
                             </IconButton>
                         </Flex>
 
-                        <VStack gap={4} align="stretch" divider={<Box borderBottom="1px solid" borderColor="gray.100" />}>
+                        <VStack gap={4} align="stretch" >
                             {selectedOrder.items.map((item, idx) => (
                                 <Flex key={idx} gap={4}>
                                     <Image

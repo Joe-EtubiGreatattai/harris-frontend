@@ -1,4 +1,4 @@
-import { Box, Flex, Text, Button, VStack, HStack, Badge, Spinner, Image, Input } from "@chakra-ui/react";
+import { Box, Flex, Text, Button, VStack, HStack, Badge, Spinner, Image } from "@chakra-ui/react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../services/api";

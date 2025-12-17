@@ -1,6 +1,6 @@
-import { Box, Flex, Text, Button, IconButton, Image, VStack, Separator, useDisclosure } from "@chakra-ui/react"
+import { Box, Flex, Text, Button, IconButton, Image, Separator, useDisclosure } from "@chakra-ui/react"
 import { useState } from "react"
-import { IoAdd, IoRemove, IoTrash, IoArrowForward, IoCartOutline, IoChevronBack } from "react-icons/io5"
+import { IoAdd, IoRemove, IoTrash, IoChevronBack } from "react-icons/io5"
 import { useCart } from "../context/CartContext"
 import { useUser } from "../context/UserContext"
 import { useNavigate } from "react-router-dom"
@@ -9,8 +9,8 @@ import { api } from "../services/api"
 
 export const CartPage = () => {
     const navigate = useNavigate()
-    const { items, updateQuantity, removeFromCart, getCartTotal, clearCart } = useCart()
-    const { user, startOrder, refreshOrders } = useUser()
+    const { items, updateQuantity, removeFromCart, getCartTotal } = useCart()
+    const { user } = useUser()
     const { open, onOpen, onClose } = useDisclosure()
 
     const [isSubmitting, setIsSubmitting] = useState(false)
