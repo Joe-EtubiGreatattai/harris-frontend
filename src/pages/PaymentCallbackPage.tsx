@@ -42,9 +42,8 @@ export const PaymentCallbackPage = () => {
 
                 const pendingOrder = JSON.parse(pendingOrderStr || '{}')
 
-                if (!pendingOrder || !pendingOrder.userEmail) {
-                    console.log("❌ No pending order found or missing userEmail")
-                    alert("Order data not found. Please try placing your order again.")
+                if (!pendingOrder || !pendingOrder.user || !pendingOrder.user.email) {
+                    console.log("❌ No pending order found or missing user email")
                     navigate('/')
                     return
                 }
