@@ -12,29 +12,63 @@ export const PaymentCallbackPage = () => {
 
     useEffect(() => {
         const verify = async () => {
-            if (reference) {
-                try {
-                    await api.verifyPayment(reference)
-                    // Payment success
-                    const pendingOrder = JSON.parse(localStorage.getItem('pendingOrder') || '{}')
-                    if (pendingOrder && pendingOrder.userEmail) {
-                        // Create Order
-                        await api.createOrder(pendingOrder)
+            console.log("🔵 Payment callback - Starting verification")
+            console.log("🔵 Reference:", reference)
 
-                        // Refresh user context to show new active order
-                        refreshOrders()
+            if (!reference) {
+                console.log("❌ No reference found, redirecting to home")
+                navigate('/')
+                return
+            }
 
-                        // Clear cart locally
-                        localStorage.removeItem('cart_items')
-                        localStorage.removeItem('pendingOrder')
+            try {
+                console.log("🔵 Calling verifyPayment API...")
+                const verificationResult = await api.verifyPayment(reference)
+                console.log("✅ Verification result:", verificationResult)
 
-                        // Redirect to Tracking
-                        navigate('/tracking')
-                    }
-                } catch (error) {
-                    console.error("Payment verification failed", error)
+                // Check if payment was actually successful
+                if (!verificationResult.status || verificationResult.data.status !== 'success') {
+                    console.log("❌ Payment not successful:", verificationResult)
+                    alert("Payment verification failed. Please contact support.")
                     navigate('/')
+                    return
                 }
+
+                console.log("✅ Payment verified successfully")
+
+                // Check for pending order
+                const pendingOrderStr = localStorage.getItem('pendingOrder')
+                console.log("🔵 Pending order from localStorage:", pendingOrderStr)
+
+                const pendingOrder = JSON.parse(pendingOrderStr || '{}')
+
+                if (!pendingOrder || !pendingOrder.userEmail) {
+                    console.log("❌ No pending order found or missing userEmail")
+                    alert("Order data not found. Please try placing your order again.")
+                    navigate('/')
+                    return
+                }
+
+                console.log("🔵 Creating order with data:", pendingOrder)
+                const orderResult = await api.createOrder(pendingOrder)
+                console.log("✅ Order created:", orderResult)
+
+                // Refresh user context to show new active order
+                console.log("🔵 Refreshing orders...")
+                refreshOrders()
+
+                // Clear cart locally
+                localStorage.removeItem('cart_items')
+                localStorage.removeItem('pendingOrder')
+                console.log("✅ Cleared cart and pending order")
+
+                // Redirect to Tracking
+                console.log("🔵 Navigating to /tracking")
+                navigate('/tracking')
+            } catch (error) {
+                console.error("❌ Payment verification failed:", error)
+                alert("An error occurred while processing your payment. Please contact support.")
+                navigate('/')
             }
         }
         verify()
