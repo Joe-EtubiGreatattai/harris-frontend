@@ -1,0 +1,239 @@
+import { Box, Flex, Image, Text, Button, IconButton, Badge, Textarea, Center, Spinner } from "@chakra-ui/react"
+import { IoChevronBack, IoHeartOutline, IoAdd, IoRemove, IoCart } from "react-icons/io5"
+import { useParams, useNavigate } from "react-router-dom"
+import { useState, useEffect } from "react"
+import { useCart } from "../context/CartContext"
+import { api } from "../services/api"
+import type { Product } from "../data/menu"
+
+export const ProductPage = () => {
+    const { id } = useParams<{ id: string }>()
+    const navigate = useNavigate()
+    const { addToCart } = useCart()
+
+    const [product, setProduct] = useState<Product | null>(null)
+    const [loading, setLoading] = useState(true)
+
+    // State for selections
+    const [selectedSize, setSelectedSize] = useState<"S" | "M" | "L" | "XL">("S")
+    const [quantity, setQuantity] = useState(1)
+    const [selectedExtras, setSelectedExtras] = useState<string[]>([])
+    const [note, setNote] = useState("")
+
+    useEffect(() => {
+        const fetchProduct = async () => {
+            if (!id) return;
+            try {
+                const data = await api.getProductById(id)
+                setProduct(data)
+            } catch (err) {
+                console.error("Failed to fetch product", err)
+            } finally {
+                setLoading(false)
+            }
+        }
+        fetchProduct()
+    }, [id])
+
+    const calculateTotal = () => {
+        if (!product) return 0;
+        let basePrice = product.prices[selectedSize]
+        let extrasPrice = selectedExtras.length * 500 // ₦500 per extra
+        return (basePrice + extrasPrice)
+    }
+
+    const handleAddToCart = () => {
+        if (!product) return;
+
+        addToCart({
+            productId: product.id,
+            name: product.name,
+            price: calculateTotal(),
+            quantity: quantity,
+            image: product.image,
+            size: selectedSize,
+            extras: selectedExtras,
+            note: note,
+            category: product.category
+        })
+        navigate('/cart')
+    }
+
+    const toggleExtra = (extra: string) => {
+        setSelectedExtras(prev =>
+            prev.includes(extra) ? prev.filter(e => e !== extra) : [...prev, extra]
+        )
+    }
+
+    if (loading) return <Center h="100vh"><Spinner size="xl" color="red.500" /></Center>
+
+    if (!product) {
+        return <Center h="100vh"><Text>Product not found</Text></Center>
+    }
+
+    return (
+        <Box pb={24} bg="gray.50" minH="100vh">
+            {/* Image Header */}
+            <Box position="relative" h="350px">
+                <Image
+                    src={product.image}
+                    w="full"
+                    h="full"
+                    objectFit="cover"
+                />
+                <Flex position="absolute" top={0} left={0} right={0} p={6} justify="space-between" align="center">
+                    <IconButton
+                        aria-label="Back"
+                        variant="ghost"
+                        bg="white/30"
+                        backdropFilter="blur(10px)"
+                        color="white"
+                        borderRadius="full"
+                        onClick={() => navigate(-1)}
+                    >
+                        <IoChevronBack size={24} />
+                    </IconButton>
+                    <IconButton
+                        aria-label="Favorite"
+                        variant="ghost"
+                        bg="white/30"
+                        backdropFilter="blur(10px)"
+                        color="white"
+                        borderRadius="full"
+                    >
+                        <IoHeartOutline size={24} />
+                    </IconButton>
+                </Flex>
+            </Box>
+
+            {/* Content Container */}
+            <Box
+                mt="-40px"
+                bg="gray.50"
+                borderTopRadius="3xl"
+                p={6}
+                position="relative"
+                zIndex={1}
+            >
+                <Flex justify="space-between" align="start" mb={2}>
+                    <Box maxW="70%">
+                        <Text fontSize="2xl" fontWeight="bold" color="gray.800" lineHeight="1.2">{product.name}</Text>
+                        <Flex gap={2} mt={2}>
+                            <Badge colorScheme="red" borderRadius="full" px={2}>Spicy</Badge>
+                            {product.isBestSeller && <Badge colorScheme="orange" borderRadius="full" px={2}>Best Seller</Badge>}
+                        </Flex>
+                    </Box>
+                    <Text fontSize="2xl" fontWeight="black" color="red.500">
+                        ₦{product.prices[selectedSize].toLocaleString()}
+                    </Text>
+                </Flex>
+
+                <Text color="gray.500" fontSize="sm" mt={4} mb={6}>
+                    {product.description}
+                </Text>
+
+                {/* Size Selection */}
+                <Text fontWeight="bold" mb={3} color="gray.700">Size</Text>
+                <Flex gap={3} mb={6}>
+                    {Object.keys(product.prices).map((size) => (
+                        <Button
+                            key={size}
+                            flex={1}
+                            variant={selectedSize === size ? "solid" : "outline"}
+                            colorScheme="red"
+                            borderRadius="xl"
+                            onClick={() => setSelectedSize(size as any)}
+                        >
+                            {size}
+                        </Button>
+                    ))}
+                </Flex>
+
+                {/* Extras/Toppings */}
+                <Text fontWeight="bold" mb={3} color="gray.700">Extra Toppings (₦500)</Text>
+                <Flex gap={2} mb={6} flexWrap="wrap">
+                    {["Cheese", "Pepperoni", "Mushroom", "Olives"].map(extra => (
+                        <Button
+                            key={extra}
+                            size="sm"
+                            variant={selectedExtras.includes(extra) ? "solid" : "ghost"}
+                            colorScheme={selectedExtras.includes(extra) ? "red" : "gray"}
+                            bg={selectedExtras.includes(extra) ? "red.500" : "gray.200"}
+                            color={selectedExtras.includes(extra) ? "white" : "gray.600"}
+                            borderRadius="full"
+                            onClick={() => toggleExtra(extra)}
+                            _hover={{ bg: selectedExtras.includes(extra) ? "red.600" : "gray.300" }}
+                        >
+                            {extra}
+                        </Button>
+                    ))}
+                </Flex>
+
+                {/* Note */}
+                <Text fontWeight="bold" mb={3} color="gray.700">Note to Kitchen</Text>
+                <Textarea
+                    placeholder="Remove onions, extra sauce..."
+                    borderRadius="xl"
+                    bg="white"
+                    border="none"
+                    shadow="sm"
+                    value={note}
+                    onChange={(e) => setNote(e.target.value)}
+                />
+            </Box>
+
+            {/* Bottom Action Bar */}
+            <Flex
+                position="fixed"
+                bottom={0}
+                left={0}
+                right={0}
+                bg="white"
+                p={4}
+                borderTopRadius="2xl"
+                shadow="2xl"
+                boxShadow="0px -4px 20px rgba(0,0,0,0.05)"
+                align="center"
+                justify="space-between"
+                zIndex={20}
+            >
+                <Flex align="center" bg="gray.100" borderRadius="full" px={4} py={2}>
+                    <IconButton
+                        aria-label="Decrease"
+                        size="sm"
+                        rounded="full"
+                        variant="ghost"
+                        onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                    >
+                        <IoRemove />
+                    </IconButton>
+                    <Text fontWeight="bold" mx={4} fontSize="lg">{quantity}</Text>
+                    <IconButton
+                        aria-label="Increase"
+                        size="sm"
+                        rounded="full"
+                        variant="ghost"
+                        onClick={() => setQuantity(quantity + 1)}
+                    >
+                        <IoAdd />
+                    </IconButton>
+                </Flex>
+
+                <Button
+                    flex={1}
+                    ml={4}
+                    colorScheme="red"
+                    bg="red.500"
+                    borderRadius="full"
+                    size="lg"
+                    onClick={handleAddToCart}
+                >
+                    <Flex align="center" gap={2}>
+                        <IoCart />
+                        <Text>₦{(calculateTotal() * quantity).toLocaleString()}</Text>
+                    </Flex>
+                </Button>
+            </Flex>
+        </Box>
+    )
+}
