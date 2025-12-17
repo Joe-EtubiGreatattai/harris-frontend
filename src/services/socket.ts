@@ -1,7 +1,7 @@
 import { io } from 'socket.io-client';
 
 // Use environment variable or default to localhost
-const SOCKET_URL = 'http://localhost:4000';
+const SOCKET_URL = 'https://harris-backend.onrender.com';
 
 export const socket = io(SOCKET_URL, {
     autoConnect: true,

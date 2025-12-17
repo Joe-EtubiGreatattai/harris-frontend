@@ -1,4 +1,4 @@
-const API_URL = "https://valrie-intermolar-smartly.ngrok-free.dev/api";
+const API_URL = 'https://harris-backend.onrender.com/api';
 
 const headers = {
     "Content-Type": "application/json",
