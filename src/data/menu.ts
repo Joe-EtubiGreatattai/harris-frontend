@@ -3,6 +3,13 @@ export interface Price {
     M: number;
     L: number;
     XL: number; // For 'C'
+    Standard?: number;
+}
+
+export interface Extra {
+    name: string;
+    price: number;
+    isAvailable: boolean;
 }
 
 export interface Product {
@@ -13,6 +20,8 @@ export interface Product {
     image: string;
     category: string;
     isBestSeller?: boolean;
+    isAvailable?: boolean;
+    extras?: Extra[];
 }
 
 export const products: Product[] = [

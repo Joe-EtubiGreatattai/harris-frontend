@@ -1,17 +1,23 @@
-import { useEffect } from "react"
+import { useEffect, useRef } from "react"
 import { useSearchParams, useNavigate } from "react-router-dom"
 import { Center, Spinner, Text } from "@chakra-ui/react"
 import { api } from "../services/api"
 import { useUser } from "../context/UserContext"
+import { useCart } from "../context/CartContext"
 
 export const PaymentCallbackPage = () => {
     const [searchParams] = useSearchParams()
     const navigate = useNavigate()
     const reference = searchParams.get('reference')
     const { refreshOrders } = useUser()
+    const { clearCart } = useCart()
+    const verificationStarted = useRef(false)
 
     useEffect(() => {
         const verify = async () => {
+            if (verificationStarted.current) return
+            verificationStarted.current = true
+
             console.log("🔵 Payment callback - Starting verification")
             console.log("🔵 Reference:", reference)
 
@@ -56,8 +62,8 @@ export const PaymentCallbackPage = () => {
                 console.log("🔵 Refreshing orders...")
                 refreshOrders()
 
-                // Clear cart locally
-                localStorage.removeItem('cart_items')
+                // Clear cart via context
+                clearCart()
                 localStorage.removeItem('pendingOrder')
                 console.log("✅ Cleared cart and pending order")
 

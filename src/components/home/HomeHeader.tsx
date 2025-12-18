@@ -1,7 +1,8 @@
 import { Flex, Text, Box, Spinner } from "@chakra-ui/react"
-import { IoLocationSharp, IoTimeOutline } from "react-icons/io5"
+import { IoLocationSharp, IoTimeOutline, IoCartOutline } from "react-icons/io5"
 import { useState, useEffect } from "react"
 import { useUser } from "../../context/UserContext"
+import { useCart } from "../../context/CartContext"
 import { useNavigate } from "react-router-dom"
 
 export const HomeHeader = () => {
@@ -9,9 +10,12 @@ export const HomeHeader = () => {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
 
-    // User Context
+    // Contexts
     const { user, setGeoAddress, hasActiveOrder, activeOrders } = useUser()
+    const { items } = useCart()
     const navigate = useNavigate()
+
+    const hasItemsInCart = items.length > 0;
 
     const fetchAddress = () => {
         setLoading(true)
@@ -72,7 +76,18 @@ export const HomeHeader = () => {
     }, [])
 
     return (
-        <Flex justify="space-between" align="center" py={6} px={6} bg="white">
+        <Flex
+            justify="space-between"
+            align="center"
+            py={6}
+            px={6}
+            bg="white"
+            position="sticky"
+            top={0}
+            zIndex={100}
+            shadow="md"
+            w="full"
+        >
             <Box onClick={fetchAddress} cursor="pointer">
                 <Flex align="center" gap={2} color="gray.500" fontSize="xs" mb={1}>
                     <IoLocationSharp color="#e53e3e" />
@@ -87,7 +102,42 @@ export const HomeHeader = () => {
                 {error && <Text fontSize="xs" color="red.500">{error} (Tap to retry)</Text>}
             </Box>
 
-            {hasActiveOrder ? (
+            {hasItemsInCart ? (
+                <Box
+                    w="40px"
+                    h="40px"
+                    borderRadius="full"
+                    bg="red.100"
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="center"
+                    cursor="pointer"
+                    onClick={() => navigate('/cart')}
+                    border="2px solid"
+                    borderColor="red.500"
+                    position="relative"
+                    animation="bounce 1s infinite"
+                >
+                    <IoCartOutline size={24} color="#E53E3E" />
+                    <Flex
+                        position="absolute"
+                        top="-2px"
+                        right="-2px"
+                        bg="green.500"
+                        color="white"
+                        w="18px"
+                        h="18px"
+                        borderRadius="full"
+                        align="center"
+                        justify="center"
+                        fontSize="xs"
+                        fontWeight="bold"
+                        border="2px solid white"
+                    >
+                        {items.reduce((acc, item) => acc + item.quantity, 0)}
+                    </Flex>
+                </Box>
+            ) : hasActiveOrder ? (
                 <Box
                     w="40px"
                     h="40px"

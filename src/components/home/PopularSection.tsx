@@ -53,6 +53,7 @@ export const PopularSection = ({ selectedCategory, searchQuery, products }: Popu
                             image={product.image}
                             isMystery={product.id === "create-your-own"}
                             isBestSeller={product.isBestSeller}
+                            isAvailable={product.isAvailable}
                         />
                     ))}
                 </SimpleGrid>

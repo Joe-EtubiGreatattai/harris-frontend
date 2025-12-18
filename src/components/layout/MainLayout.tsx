@@ -11,8 +11,6 @@ export const MainLayout = () => {
                 bg="white"
                 boxShadow="2xl"
                 position="relative"
-                overflowY="auto"
-                overflowX="hidden"
             >
                 <Outlet />
             </Container>

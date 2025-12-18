@@ -5,7 +5,7 @@ import { SearchSection } from "../components/home/SearchSection"
 import { CategoryFilter } from "../components/home/CategoryFilter"
 import { PopularSection } from "../components/home/PopularSection"
 import { api } from "../services/api"
-import type { Product } from "../data/menu"
+import { socket } from "../services/socket"
 
 export const HomePage = () => {
     const [selectedCategory, setSelectedCategory] = useState("Pizza")
@@ -25,6 +25,16 @@ export const HomePage = () => {
             }
         }
         loadProducts()
+
+        socket.on('productUpdated', (updatedProduct: any) => {
+            setProducts(prev =>
+                prev.map(p => p.id === updatedProduct.id ? updatedProduct : p)
+            );
+        });
+
+        return () => {
+            socket.off('productUpdated');
+        };
     }, [])
 
     if (loading) return <Center h="100vh"><Spinner size="xl" color="red.500" /></Center>

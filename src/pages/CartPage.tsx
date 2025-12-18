@@ -1,5 +1,5 @@
 import { Box, Flex, Text, Button, IconButton, Image, Separator, useDisclosure } from "@chakra-ui/react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { IoAdd, IoRemove, IoTrash, IoChevronBack } from "react-icons/io5"
 import { useCart } from "../context/CartContext"
 import { useUser } from "../context/UserContext"
@@ -14,9 +14,21 @@ export const CartPage = () => {
     const { open, onOpen, onClose } = useDisclosure()
 
     const [isSubmitting, setIsSubmitting] = useState(false)
+    const [deliveryFee, setDeliveryFee] = useState(0)
+
+    useEffect(() => {
+        const fetchSettings = async () => {
+            try {
+                const settings = await api.getSettings();
+                setDeliveryFee(settings.deliveryFee || 0);
+            } catch (err) {
+                console.error("Failed to fetch settings", err);
+            }
+        };
+        fetchSettings();
+    }, []);
 
     const subtotal = getCartTotal()
-    const deliveryFee = 500
     const total = subtotal + deliveryFee
 
     const handleCheckout = () => {
@@ -46,6 +58,7 @@ export const CartPage = () => {
                     extras: item.extras,
                     note: item.note
                 })),
+                deliveryFee: deliveryFee,
                 total: total,
                 status: "Pending",
                 date: new Date().toLocaleDateString('en-GB')

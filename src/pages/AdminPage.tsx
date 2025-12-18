@@ -3,16 +3,20 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../services/api";
 import { ProductModal } from "../components/admin/ProductModal";
-import { IoAdd, IoPencil, IoTrash, IoRefresh } from "react-icons/io5";
+import { RiderModal } from "../components/admin/RiderModal";
+import { IoAdd, IoPencil, IoTrash, IoRefresh, IoPerson } from "react-icons/io5";
 import { socket } from "../services/socket"; // Import socket
 
 export const AdminPage = () => {
     const [orders, setOrders] = useState<any[]>([]);
     const [products, setProducts] = useState<any[]>([]);
+    const [riders, setRiders] = useState<any[]>([]);
+    const [settings, setSettings] = useState<any>({ deliveryFee: 0 });
     const [isLoading, setIsLoading] = useState(true);
     const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+    const [isRiderModalOpen, setIsRiderModalOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState<any>(null);
-    const [activeTab, setActiveTab] = useState<'orders' | 'products'>('orders');
+    const [activeTab, setActiveTab] = useState<'orders' | 'products' | 'riders' | 'settings'>('orders');
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -33,21 +37,39 @@ export const AdminPage = () => {
             );
         });
 
+        socket.on('productUpdated', (updatedProduct: any) => {
+            setProducts((prev) =>
+                prev.map(p => p.id === updatedProduct.id ? updatedProduct : p)
+            );
+        });
+
+        socket.on('riderUpdated', (updatedRider: any) => {
+            setRiders((prev) =>
+                prev.map(r => r._id === updatedRider._id ? updatedRider : r)
+            );
+        });
+
         return () => {
             socket.off('newOrder');
             socket.off('orderUpdated');
+            socket.off('productUpdated');
+            socket.off('riderUpdated');
         };
     }, []);
 
     const fetchData = async () => {
         setIsLoading(true);
         try {
-            const [ordersData, productsData] = await Promise.all([
+            const [ordersData, productsData, ridersData, settingsData] = await Promise.all([
                 api.getAllOrders(),
-                api.getProducts()
+                api.getProducts(),
+                api.getRiders(),
+                api.getSettings()
             ]);
             setOrders(ordersData);
             setProducts(productsData);
+            setRiders(ridersData);
+            setSettings(settingsData);
         } catch (error) {
             console.error("Failed to load data");
         } finally {
@@ -67,18 +89,52 @@ export const AdminPage = () => {
         }
     };
 
+    const handleAssignRider = async (orderId: string, riderId: string) => {
+        try {
+            await api.assignRiderToOrder(orderId, riderId);
+            // Socket will handle UI update
+        } catch (error) {
+            alert("Assignment failed");
+        }
+    };
+
+    const handleToggleSuspension = async (riderId: string, currentStatus: string) => {
+        try {
+            const newStatus = currentStatus === 'Suspended' ? 'Available' : 'Suspended';
+            await api.updateRider(riderId, { status: newStatus });
+            alert(`Rider ${newStatus === 'Suspended' ? 'suspended' : 'unsuspended'}`);
+            fetchData();
+        } catch (error) {
+            alert("Failed to update rider status");
+        }
+    };
+
     const handleSaveProduct = async (productData: any) => {
         try {
-            if (editingProduct) {
-                await api.updateProduct(editingProduct.id, productData);
-                alert("Product updated");
+            const isExisting = products.some(p => p.id === productData.id);
+
+            if (isExisting) {
+                // Strip internal _id and __v to avoid Mongo errors
+                const { _id, __v, ...cleanData } = productData;
+                await api.updateProduct(productData.id, cleanData);
             } else {
                 await api.createProduct(productData);
                 alert("Product created");
             }
             fetchData();
         } catch (error) {
-            alert("Operation failed");
+            console.error("Operation failed", error);
+            throw error;
+        }
+    };
+
+    const handleSaveRider = async (riderData: any) => {
+        try {
+            await api.createRider(riderData);
+            alert("Rider added");
+            fetchData();
+        } catch (error) {
+            alert("Failed to add rider");
             throw error;
         }
     };
@@ -88,6 +144,27 @@ export const AdminPage = () => {
         try {
             await api.deleteProduct(id);
             alert("Product deleted");
+            fetchData();
+        } catch (error) {
+            alert("Delete failed");
+        }
+    };
+
+    const handleUpdateSettings = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            await api.updateSettings(settings);
+            alert("Settings updated successfully");
+        } catch (error) {
+            alert("Failed to update settings");
+        }
+    };
+
+    const handleDeleteRider = async (id: string) => {
+        if (!confirm("Are you sure?")) return;
+        try {
+            await api.deleteRider(id);
+            alert("Rider deleted");
             fetchData();
         } catch (error) {
             alert("Delete failed");
@@ -149,6 +226,22 @@ export const AdminPage = () => {
                 >
                     Products ({products.length})
                 </Button>
+                <Button
+                    variant={activeTab === 'riders' ? 'solid' : 'ghost'}
+                    colorScheme={activeTab === 'riders' ? 'red' : 'gray'}
+                    onClick={() => setActiveTab('riders')}
+                    borderRadius="lg"
+                >
+                    Riders ({riders.length})
+                </Button>
+                <Button
+                    variant={activeTab === 'settings' ? 'solid' : 'ghost'}
+                    colorScheme={activeTab === 'settings' ? 'red' : 'gray'}
+                    onClick={() => setActiveTab('settings')}
+                    borderRadius="lg"
+                >
+                    Settings
+                </Button>
             </Flex>
 
             {/* Content Area */}
@@ -177,20 +270,59 @@ export const AdminPage = () => {
                                 </VStack>
 
                                 <Flex mt={3} justify="space-between" align="center" wrap="wrap" gap={3}>
-                                    <Text fontSize="sm" fontWeight="bold">User: {order.user.email} | {order.user.address}</Text>
+                                    <VStack align="start" gap={1}>
+                                        <Text fontSize="sm" fontWeight="bold">User: {order.user.email} | {order.user.address}</Text>
+                                        <HStack>
+                                            <Text fontSize="sm">Rider:</Text>
+                                            <Box border="1px solid" borderColor="gray.200" borderRadius="md" px={2} h="32px" display="flex" alignItems="center">
+                                                <select
+                                                    style={{
+                                                        fontSize: "14px",
+                                                        background: "transparent",
+                                                        outline: "none",
+                                                        width: "180px",
+                                                        cursor: (order.status !== 'Ready for Delivery' && order.status !== 'Out for Delivery') ? 'not-allowed' : 'pointer'
+                                                    }}
+                                                    value={order.assignedRider?._id || order.assignedRider || ""}
+                                                    onChange={(e) => handleAssignRider(order.orderId, e.target.value)}
+                                                    disabled={order.status !== 'Ready for Delivery' && order.status !== 'Out for Delivery'}
+                                                >
+                                                    <option value="">Unassigned</option>
+                                                    {riders.filter(r => r.status !== 'Suspended' || (order.assignedRider?._id === r._id || order.assignedRider === r._id)).map(r => (
+                                                        <option key={r._id} value={r._id}>{r.name} ({r.status})</option>
+                                                    ))}
+                                                </select>
+                                            </Box>
+                                        </HStack>
+                                    </VStack>
                                     <HStack>
                                         {/* Status Controls */}
                                         {order.status !== 'Delivered' && (
                                             <>
                                                 {/* Only Users can mark Delivered now. Admin can move to other states like 'Preparing', 'Out for Delivery' */}
-                                                {order.status !== 'Preparing' && (
-                                                    <Button size="sm" onClick={() => handleUpdateStatus(order.orderId, "Preparing")}>
+                                                {order.status === 'Pending' && (
+                                                    <Button size="sm" colorScheme="orange" onClick={() => handleUpdateStatus(order.orderId, "Preparing")}>
                                                         Prepare
                                                     </Button>
                                                 )}
-                                                {order.status !== 'Out for Delivery' && (
-                                                    <Button size="sm" onClick={() => handleUpdateStatus(order.orderId, "Out for Delivery")}>
+                                                {order.status === 'Preparing' && (
+                                                    <Button size="sm" colorScheme="blue" onClick={() => handleUpdateStatus(order.orderId, "Ready for Delivery")}>
+                                                        Mark Ready
+                                                    </Button>
+                                                )}
+                                                {order.status === 'Ready for Delivery' && (
+                                                    <Button
+                                                        size="sm"
+                                                        colorScheme="red"
+                                                        onClick={() => handleUpdateStatus(order.orderId, "Out for Delivery")}
+                                                        disabled={!order.assignedRider}
+                                                    >
                                                         Dispatch
+                                                    </Button>
+                                                )}
+                                                {order.status === 'Out for Delivery' && (
+                                                    <Button size="sm" variant="outline" colorScheme="green" onClick={() => handleUpdateStatus(order.orderId, "Delivered")}>
+                                                        Mark Delivered
                                                     </Button>
                                                 )}
                                             </>
@@ -212,7 +344,20 @@ export const AdminPage = () => {
                         <Flex wrap="wrap" gap={4}>
                             {products.map((product) => (
                                 <Box key={product._id} w="250px" bg="white" border="1px solid" borderColor="gray.100" borderRadius="xl" overflow="hidden" shadow="sm">
-                                    <Image src={product.image} h="150px" w="full" objectFit="cover" />
+                                    <Box position="relative">
+                                        <Image src={product.image} h="150px" w="full" objectFit="cover" opacity={product.isAvailable ? 1 : 0.5} />
+                                        {!product.isAvailable && (
+                                            <Badge
+                                                position="absolute"
+                                                top={2}
+                                                right={2}
+                                                colorScheme="red"
+                                                variant="solid"
+                                            >
+                                                Unavailable
+                                            </Badge>
+                                        )}
+                                    </Box>
                                     <Box p={4}>
                                         <HStack justify="space-between" mb={2}>
                                             <Badge>{product.category}</Badge>
@@ -223,18 +368,98 @@ export const AdminPage = () => {
                                         <Text fontWeight="bold" mb={1} truncate>{product.name}</Text>
                                         <Text fontSize="xs" color="gray.500" mb={4} lineClamp={2}>{product.description}</Text>
 
-                                        <HStack>
-                                            <Button size="sm" onClick={() => openEditModal(product)}>
-                                                <IoPencil />
-                                            </Button>
-                                            <Button size="sm" colorScheme="red" variant="ghost" onClick={() => handleDeleteProduct(product.id)}>
-                                                <IoTrash />
-                                            </Button>
-                                        </HStack>
+                                        <VStack align="stretch" gap={3} mt={2}>
+                                            <Flex justify="space-between" align="center">
+                                                <HStack gap={2}>
+                                                    <Button size="sm" onClick={() => openEditModal(product)} p={2}>
+                                                        <IoPencil />
+                                                    </Button>
+                                                    <Button size="sm" colorScheme="red" variant="ghost" onClick={() => handleDeleteProduct(product.id)} p={2}>
+                                                        <IoTrash />
+                                                    </Button>
+                                                </HStack>
+                                                <Button
+                                                    size="xs"
+                                                    colorScheme={product.isAvailable !== false ? "red" : "green"}
+                                                    variant="ghost"
+                                                    onClick={() => handleSaveProduct({ ...product, isAvailable: !product.isAvailable })}
+                                                    fontWeight="bold"
+                                                    px={2}
+                                                >
+                                                    {product.isAvailable !== false ? "Mark as Unavailable" : "Mark as Available"}
+                                                </Button>
+                                            </Flex>
+                                        </VStack>
                                     </Box>
                                 </Box>
                             ))}
                         </Flex>
+                    </Box>
+                )}
+
+                {activeTab === 'riders' && (
+                    <Box>
+                        <Button colorScheme="red" mb={6} onClick={() => setIsRiderModalOpen(true)} gap={2}>
+                            <IoAdd /> Add New Rider
+                        </Button>
+
+                        <VStack gap={4} align="stretch">
+                            {riders.map((rider) => (
+                                <Box key={rider._id} p={4} bg="white" border="1px solid" borderColor="gray.100" borderRadius="xl" shadow="sm">
+                                    <Flex justify="space-between" align="center">
+                                        <HStack gap={4}>
+                                            <Box p={3} bg="gray.50" borderRadius="full">
+                                                <IoPerson size={24} />
+                                            </Box>
+                                            <Box>
+                                                <Text fontWeight="bold" fontSize="lg">{rider.name}</Text>
+                                                <Text fontSize="sm" color="gray.500">{rider.email} • {rider.phone}</Text>
+                                            </Box>
+                                        </HStack>
+                                        <HStack gap={4}>
+                                            <Badge colorScheme={rider.status === 'Available' ? 'green' : rider.status === 'Busy' ? 'orange' : rider.status === 'Suspended' ? 'red' : 'gray'}>
+                                                {rider.status}
+                                            </Badge>
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                colorScheme={rider.status === 'Suspended' ? 'green' : 'orange'}
+                                                onClick={() => handleToggleSuspension(rider._id, rider.status)}
+                                            >
+                                                {rider.status === 'Suspended' ? 'Unsuspend' : 'Suspend'}
+                                            </Button>
+                                            <Button size="sm" colorScheme="red" variant="ghost" onClick={() => handleDeleteRider(rider._id)}>
+                                                <IoTrash />
+                                            </Button>
+                                        </HStack>
+                                    </Flex>
+                                </Box>
+                            ))}
+                            {riders.length === 0 && <Text color="gray.500">No riders found.</Text>}
+                        </VStack>
+                    </Box>
+                )}
+
+                {activeTab === 'settings' && (
+                    <Box maxW="500px" bg="white" p={6} borderRadius="xl" shadow="sm">
+                        <Text fontSize="xl" fontWeight="bold" mb={6}>Global Settings</Text>
+                        <VStack as="form" gap={4} align="stretch" onSubmit={handleUpdateSettings}>
+                            <Box>
+                                <Text fontWeight="bold" mb={2}>Delivery Fee (₦)</Text>
+                                <Box border="1px solid" borderColor="gray.200" borderRadius="md" px={3} h="45px" display="flex" alignItems="center">
+                                    <input
+                                        type="number"
+                                        style={{ width: '100%', outline: 'none' }}
+                                        value={settings.deliveryFee}
+                                        onChange={(e) => setSettings({ ...settings, deliveryFee: Number(e.target.value) })}
+                                    />
+                                </Box>
+                                <Text fontSize="xs" color="gray.500" mt={1}>This fee will be applied to all customer orders at checkout.</Text>
+                            </Box>
+                            <Button type="submit" colorScheme="red" size="lg" mt={2}>
+                                Save Settings
+                            </Button>
+                        </VStack>
                     </Box>
                 )}
             </Box>
@@ -244,6 +469,12 @@ export const AdminPage = () => {
                 onClose={() => setIsProductModalOpen(false)}
                 product={editingProduct}
                 onSave={handleSaveProduct}
+            />
+
+            <RiderModal
+                isOpen={isRiderModalOpen}
+                onClose={() => setIsRiderModalOpen(false)}
+                onSave={handleSaveRider}
             />
         </Box>
     );

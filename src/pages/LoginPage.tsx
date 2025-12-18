@@ -15,7 +15,7 @@ export const LoginPage = () => {
         setError('');
 
         try {
-            const response = await fetch('https://harris-backend.onrender.com/api/admin/login', {
+            const response = await fetch('http://192.168.0.130:4000/api/admin/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

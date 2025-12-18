@@ -74,6 +74,17 @@ export const api = {
         return response.json();
     },
 
+    uploadImage: async (file: File) => {
+        const formData = new FormData();
+        formData.append('image', file);
+        const response = await fetch(`${API_URL}/products/upload`, {
+            method: 'POST',
+            body: formData, // No JSON headers for multipart
+        });
+        if (!response.ok) throw new Error("Upload failed");
+        return response.json();
+    },
+
     deleteProduct: async (id: string) => {
         const response = await fetch(`${API_URL}/products/${id}`, {
             method: 'DELETE',
@@ -96,5 +107,68 @@ export const api = {
     verifyPayment: async (reference: string) => {
         const response = await fetch(`${API_URL}/payment/verify/${reference}`, { headers })
         return response.json()
+    },
+
+    // Riders
+    getRiders: async () => {
+        const response = await fetch(`${API_URL}/riders`, { headers });
+        if (!response.ok) throw new Error("Failed to fetch riders");
+        return response.json();
+    },
+
+    createRider: async (riderData: any) => {
+        const response = await fetch(`${API_URL}/riders`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(riderData)
+        });
+        if (!response.ok) throw new Error("Failed to create rider");
+        return response.json();
+    },
+
+    updateRider: async (id: string, riderData: any) => {
+        const response = await fetch(`${API_URL}/riders/${id}`, {
+            method: 'PATCH',
+            headers,
+            body: JSON.stringify(riderData)
+        });
+        if (!response.ok) throw new Error("Failed to update rider");
+        return response.json();
+    },
+
+    assignRiderToOrder: async (orderId: string, riderId: string) => {
+        const response = await fetch(`${API_URL}/orders/${orderId}/assign-rider`, {
+            method: 'PATCH',
+            headers,
+            body: JSON.stringify({ riderId }),
+        });
+        if (!response.ok) throw new Error("Failed to assign rider");
+        return response.json();
+    },
+
+    deleteRider: async (id: string) => {
+        const response = await fetch(`${API_URL}/riders/${id}`, {
+            method: 'DELETE',
+            headers
+        });
+        if (!response.ok) throw new Error("Failed to delete rider");
+        return response.json();
+    },
+
+    // Settings
+    getSettings: async () => {
+        const response = await fetch(`${API_URL}/settings`, { headers });
+        if (!response.ok) throw new Error("Failed to fetch settings");
+        return response.json();
+    },
+
+    updateSettings: async (settingsData: any) => {
+        const response = await fetch(`${API_URL}/settings`, {
+            method: "PATCH",
+            headers,
+            body: JSON.stringify(settingsData),
+        });
+        if (!response.ok) throw new Error("Failed to update settings");
+        return response.json();
     }
 };

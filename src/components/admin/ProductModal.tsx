@@ -1,6 +1,7 @@
-import { Box, Flex, Text, Button, Input, VStack } from "@chakra-ui/react";
-import { useState, useEffect } from "react";
-import { IoClose } from "react-icons/io5";
+import { Box, Flex, Text, Button, Input, VStack, HStack, IconButton, Image, Spinner, Center } from "@chakra-ui/react";
+import { useState, useEffect, useRef } from "react";
+import { IoClose, IoAdd, IoTrash, IoCloudUploadOutline, IoCheckmarkCircle, IoRadioButtonOff } from "react-icons/io5";
+import { api } from "../../services/api";
 
 interface ProductModalProps {
     isOpen: boolean;
@@ -16,30 +17,40 @@ export const ProductModal = ({ isOpen, onClose, product, onSave }: ProductModalP
         category: "Pizza",
         image: "",
         description: "",
-        price: ""
+        price: "",
+        isAvailable: true,
+        extras: [] as any[]
     });
     const [isLoading, setIsLoading] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         if (product) {
-            // Edit mode
             setFormData({
                 id: product.id,
                 name: product.name,
                 category: product.category,
                 image: product.image,
                 description: product.description || "",
-                price: typeof product.prices === 'object' ? product.prices.M || product.prices.Standard : product.price
+                price: typeof product.prices === 'object' ? (product.prices.M || product.prices.Standard || "").toString() : product.price.toString(),
+                isAvailable: product.isAvailable !== false,
+                extras: product.extras || []
             });
         } else {
-            // Add mode
             setFormData({
                 id: `prod-${Math.random().toString(36).substr(2, 6)}`,
                 name: "",
                 category: "Pizza",
                 image: "",
                 description: "",
-                price: ""
+                price: "",
+                isAvailable: true,
+                extras: [
+                    { name: "Cheese", price: 500, isAvailable: true },
+                    { name: "Pepperoni", price: 500, isAvailable: true },
+                    { name: "Mushroom", price: 500, isAvailable: true }
+                ]
             });
         }
     }, [product, isOpen]);
@@ -48,10 +59,45 @@ export const ProductModal = ({ isOpen, onClose, product, onSave }: ProductModalP
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setIsUploading(true);
+        try {
+            const { url } = await api.uploadImage(file);
+            setFormData(prev => ({ ...prev, image: url }));
+        } catch (error) {
+            alert("Upload failed");
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
+    const handleAddExtra = () => {
+        setFormData(prev => ({
+            ...prev,
+            extras: [...prev.extras, { name: "", price: 500, isAvailable: true }]
+        }));
+    };
+
+    const handleExtraChange = (index: number, field: string, value: any) => {
+        const newExtras = [...formData.extras];
+        newExtras[index] = { ...newExtras[index], [field]: value };
+        setFormData(prev => ({ ...prev, extras: newExtras }));
+    };
+
+    const handleRemoveExtra = (index: number) => {
+        setFormData(prev => ({
+            ...prev,
+            extras: prev.extras.filter((_, i) => i !== index)
+        }));
+    };
+
     const handleSubmit = async () => {
         setIsLoading(true);
         try {
-            const priceVal = parseFloat(formData.price as string);
+            const priceVal = parseFloat(formData.price);
             const payload = {
                 ...formData,
                 price: priceVal,
@@ -90,58 +136,174 @@ export const ProductModal = ({ isOpen, onClose, product, onSave }: ProductModalP
             <Box
                 bg="white"
                 w="full"
-                maxW="lg"
+                maxW="2xl"
                 borderRadius="2xl"
                 boxShadow="2xl"
                 onClick={(e) => e.stopPropagation()}
                 overflow="hidden"
             >
                 <Flex justify="space-between" align="center" p={6} borderBottom="1px solid" borderColor="gray.100">
-                    <Text fontWeight="bold" fontSize="xl">{product ? "Edit Product" : "Add New Product"}</Text>
-                    <Button
+                    <VStack align="start" gap={0}>
+                        <Text fontWeight="bold" fontSize="xl">{product ? "Edit Product" : "Add New Product"}</Text>
+                        <Text fontSize="xs" color="gray.500">ID: {formData.id}</Text>
+                    </VStack>
+                    <IconButton
+                        aria-label="Close"
                         variant="ghost"
                         onClick={onClose}
                         borderRadius="full"
-                        size="sm"
-                        p={0}
                     >
                         <IoClose size={24} />
-                    </Button>
+                    </IconButton>
                 </Flex>
 
-                <Box p={6} maxH="70vh" overflowY="auto">
-                    <VStack gap={4} align="stretch">
-                        <Box>
-                            <Text fontWeight="bold" mb={2} fontSize="sm">Name</Text>
-                            <Input name="name" value={formData.name} onChange={handleChange} placeholder="e.g. Pepperoni Feast" />
-                        </Box>
+                <Box p={6} maxH="75vh" overflowY="auto">
+                    <VStack gap={6} align="stretch">
+                        <Flex gap={6} direction={{ base: "column", md: "row" }}>
+                            <VStack align="stretch" flex={1} gap={4}>
+                                <Box>
+                                    <Text fontWeight="bold" mb={2} fontSize="sm">Name</Text>
+                                    <Input name="name" value={formData.name} onChange={handleChange} placeholder="e.g. Pepperoni Feast" />
+                                </Box>
 
-                        <Box>
-                            <Text fontWeight="bold" mb={2} fontSize="sm">Category</Text>
-                            <Box border="1px solid" borderColor="gray.200" borderRadius="md" px={2}>
-                                <select
-                                    name="category"
-                                    value={formData.category}
-                                    onChange={handleChange}
-                                    style={{ width: "100%", height: "40px", outline: "none" }}
+                                <Box>
+                                    <Text fontWeight="bold" mb={2} fontSize="sm">Category</Text>
+                                    <Box border="1px solid" borderColor="gray.200" borderRadius="md" px={2}>
+                                        <select
+                                            name="category"
+                                            value={formData.category}
+                                            onChange={handleChange}
+                                            style={{ width: "100%", height: "40px", outline: "none" }}
+                                        >
+                                            <option value="Pizza">Pizza</option>
+                                            <option value="Burger">Burger</option>
+                                            <option value="Chicken">Chicken</option>
+                                            <option value="Shawarma">Shawarma</option>
+                                            <option value="Drinks">Drinks</option>
+                                        </select>
+                                    </Box>
+                                </Box>
+
+                                <Box>
+                                    <Text fontWeight="bold" mb={2} fontSize="sm">Price (Base/Medium)</Text>
+                                    <Input type="number" name="price" value={formData.price} onChange={handleChange} />
+                                </Box>
+
+                                <Flex align="center" justify="space-between" bg="gray.50" p={3} borderRadius="lg">
+                                    <Box>
+                                        <Text fontWeight="bold" fontSize="sm">Availability</Text>
+                                        <Text fontSize="xs" color="gray.500">Is this product currently orderable?</Text>
+                                    </Box>
+                                    <Button
+                                        size="sm"
+                                        colorScheme={formData.isAvailable ? "green" : "red"}
+                                        variant={formData.isAvailable ? "solid" : "outline"}
+                                        onClick={() => setFormData({ ...formData, isAvailable: !formData.isAvailable })}
+                                    >
+                                        <Flex gap={2} align="center">
+                                            {formData.isAvailable ? <IoCheckmarkCircle /> : <IoRadioButtonOff />}
+                                            {formData.isAvailable ? "Available" : "Unavailable"}
+                                        </Flex>
+                                    </Button>
+                                </Flex>
+                            </VStack>
+
+                            <VStack align="stretch" w={{ base: "full", md: "250px" }} gap={4}>
+                                <Text fontWeight="bold" fontSize="sm">Product Image</Text>
+                                <Box
+                                    h="150px"
+                                    bg="gray.100"
+                                    borderRadius="xl"
+                                    overflow="hidden"
+                                    position="relative"
+                                    border="2px dashed"
+                                    borderColor={formData.image ? "transparent" : "gray.300"}
                                 >
-                                    <option value="Pizza">Pizza</option>
-                                    <option value="Burger">Burger</option>
-                                    <option value="Chicken">Chicken</option>
-                                    <option value="Shawarma">Shawarma</option>
-                                    <option value="Drinks">Drinks</option>
-                                </select>
-                            </Box>
-                        </Box>
+                                    {formData.image ? (
+                                        <Image src={formData.image} w="full" h="full" objectFit="cover" />
+                                    ) : (
+                                        <Center h="full">
+                                            {isUploading ? <Spinner color="red.500" /> : <IoCloudUploadOutline size={40} color="gray" />}
+                                        </Center>
+                                    )}
+                                    <Input
+                                        type="file"
+                                        hidden
+                                        ref={fileInputRef}
+                                        accept="image/*"
+                                        onChange={handleFileUpload}
+                                    />
+                                    <Button
+                                        size="xs"
+                                        position="absolute"
+                                        bottom={2}
+                                        right={2}
+                                        onClick={() => fileInputRef.current?.click()}
+                                        bg="blackAlpha.600"
+                                        color="white"
+                                    >
+                                        {formData.image ? "Change" : "Upload"}
+                                    </Button>
+                                </Box>
+                                <Input
+                                    size="sm"
+                                    name="image"
+                                    value={formData.image}
+                                    onChange={handleChange}
+                                    placeholder="Or paste Image URL"
+                                />
+                            </VStack>
+                        </Flex>
 
                         <Box>
-                            <Text fontWeight="bold" mb={2} fontSize="sm">Price (Base/Medium)</Text>
-                            <Input type="number" name="price" value={formData.price} onChange={handleChange} />
-                        </Box>
-
-                        <Box>
-                            <Text fontWeight="bold" mb={2} fontSize="sm">Image URL</Text>
-                            <Input name="image" value={formData.image} onChange={handleChange} placeholder="https://..." />
+                            <Flex justify="space-between" align="center" mb={4}>
+                                <Text fontWeight="bold" fontSize="sm">Extras / Toppings</Text>
+                                <Button size="xs" colorScheme="red" variant="ghost" onClick={handleAddExtra}>
+                                    <Flex gap={1} align="center"><IoAdd /> Add Extra</Flex>
+                                </Button>
+                            </Flex>
+                            <VStack gap={2} align="stretch">
+                                {formData.extras.map((extra, index) => (
+                                    <HStack key={index} gap={2} bg="gray.50" p={2} borderRadius="lg">
+                                        <Input
+                                            size="sm"
+                                            value={extra.name}
+                                            placeholder="Extra Name"
+                                            onChange={(e) => handleExtraChange(index, 'name', e.target.value)}
+                                            bg="white"
+                                        />
+                                        <Input
+                                            size="sm"
+                                            type="number"
+                                            w="80px"
+                                            value={extra.price}
+                                            onChange={(e) => handleExtraChange(index, 'price', parseFloat(e.target.value))}
+                                            bg="white"
+                                        />
+                                        <IconButton
+                                            aria-label="Toggle Availability"
+                                            size="sm"
+                                            variant="ghost"
+                                            colorScheme={extra.isAvailable ? "green" : "red"}
+                                            onClick={() => handleExtraChange(index, 'isAvailable', !extra.isAvailable)}
+                                        >
+                                            {extra.isAvailable ? <IoCheckmarkCircle /> : <IoRadioButtonOff />}
+                                        </IconButton>
+                                        <IconButton
+                                            aria-label="Delete"
+                                            size="sm"
+                                            variant="ghost"
+                                            colorScheme="red"
+                                            onClick={() => handleRemoveExtra(index)}
+                                        >
+                                            <IoTrash />
+                                        </IconButton>
+                                    </HStack>
+                                ))}
+                                {formData.extras.length === 0 && (
+                                    <Text fontSize="xs" color="gray.500" textAlign="center" py={4}>No extras defined for this product.</Text>
+                                )}
+                            </VStack>
                         </Box>
 
                         <Box>
@@ -152,8 +314,17 @@ export const ProductModal = ({ isOpen, onClose, product, onSave }: ProductModalP
                 </Box>
 
                 <Flex p={6} borderTop="1px solid" borderColor="gray.100" justify="flex-end" gap={3}>
-                    <Button variant="ghost" onClick={onClose}>Cancel</Button>
-                    <Button bg="red.500" color="white" _hover={{ bg: "red.600" }} onClick={handleSubmit} loading={isLoading}>Save</Button>
+                    <Button variant="ghost" onClick={onClose} disabled={isLoading || isUploading}>Cancel</Button>
+                    <Button
+                        bg="red.500"
+                        color="white"
+                        _hover={{ bg: "red.600" }}
+                        onClick={handleSubmit}
+                        loading={isLoading}
+                        disabled={isUploading}
+                    >
+                        Save Product
+                    </Button>
                 </Flex>
             </Box>
         </Box>

@@ -4,6 +4,7 @@ import { useParams, useNavigate } from "react-router-dom"
 import { useState, useEffect } from "react"
 import { useCart } from "../context/CartContext"
 import { api } from "../services/api"
+import { socket } from "../services/socket"
 import type { Product } from "../data/menu"
 
 export const ProductPage = () => {
@@ -33,6 +34,18 @@ export const ProductPage = () => {
             }
         }
         fetchProduct()
+
+        const handleProductUpdated = (updatedProduct: any) => {
+            if (updatedProduct.id === id) {
+                setProduct(updatedProduct);
+            }
+        };
+
+        socket.on('productUpdated', handleProductUpdated);
+
+        return () => {
+            socket.off('productUpdated', handleProductUpdated);
+        };
     }, [id])
 
     const calculateTotal = () => {
@@ -150,24 +163,28 @@ export const ProductPage = () => {
                 </Flex>
 
                 {/* Extras/Toppings */}
-                <Text fontWeight="bold" mb={3} color="gray.700">Extra Toppings (₦500)</Text>
-                <Flex gap={2} mb={6} flexWrap="wrap">
-                    {["Cheese", "Pepperoni", "Mushroom", "Olives"].map(extra => (
-                        <Button
-                            key={extra}
-                            size="sm"
-                            variant={selectedExtras.includes(extra) ? "solid" : "ghost"}
-                            colorScheme={selectedExtras.includes(extra) ? "red" : "gray"}
-                            bg={selectedExtras.includes(extra) ? "red.500" : "gray.200"}
-                            color={selectedExtras.includes(extra) ? "white" : "gray.600"}
-                            borderRadius="full"
-                            onClick={() => toggleExtra(extra)}
-                            _hover={{ bg: selectedExtras.includes(extra) ? "red.600" : "gray.300" }}
-                        >
-                            {extra}
-                        </Button>
-                    ))}
-                </Flex>
+                {(product.extras && product.extras.length > 0) && (
+                    <>
+                        <Text fontWeight="bold" mb={3} color="gray.700">Extra Toppings</Text>
+                        <Flex gap={2} mb={6} flexWrap="wrap">
+                            {product.extras.filter((e: any) => e.isAvailable !== false).map((extra: any) => (
+                                <Button
+                                    key={extra.name}
+                                    size="sm"
+                                    variant={selectedExtras.includes(extra.name) ? "solid" : "ghost"}
+                                    colorScheme={selectedExtras.includes(extra.name) ? "red" : "gray"}
+                                    bg={selectedExtras.includes(extra.name) ? "red.500" : "gray.200"}
+                                    color={selectedExtras.includes(extra.name) ? "white" : "gray.600"}
+                                    borderRadius="full"
+                                    onClick={() => toggleExtra(extra.name)}
+                                    _hover={{ bg: selectedExtras.includes(extra.name) ? "red.600" : "gray.300" }}
+                                >
+                                    {extra.name} (₦{extra.price})
+                                </Button>
+                            ))}
+                        </Flex>
+                    </>
+                )}
 
                 {/* Note */}
                 <Text fontWeight="bold" mb={3} color="gray.700">Note to Kitchen</Text>
@@ -223,14 +240,21 @@ export const ProductPage = () => {
                     flex={1}
                     ml={4}
                     colorScheme="red"
-                    bg="red.500"
+                    bg={product.isAvailable === false ? "gray.400" : "red.500"}
                     borderRadius="full"
                     size="lg"
                     onClick={handleAddToCart}
+                    disabled={product.isAvailable === false}
                 >
                     <Flex align="center" gap={2}>
-                        <IoCart />
-                        <Text>₦{(calculateTotal() * quantity).toLocaleString()}</Text>
+                        {product.isAvailable === false ? (
+                            <Text>Unavailable</Text>
+                        ) : (
+                            <>
+                                <IoCart />
+                                <Text>₦{(calculateTotal() * quantity).toLocaleString()}</Text>
+                            </>
+                        )}
                     </Flex>
                 </Button>
             </Flex>

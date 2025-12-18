@@ -1,6 +1,7 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import { api } from "../services/api";
+import { socket } from "../services/socket";
 import type { CartItem } from "./CartContext";
 
 export interface UserProfile {
@@ -14,7 +15,14 @@ export interface Order {
     createdAt: string; // Used for timer
     items: CartItem[];
     total: number;
-    status: "Delivered" | "Pending";
+    status: "Delivered" | "Pending" | "Preparing" | "Ready for Delivery" | "Out for Delivery";
+    assignedRider?: {
+        _id: string;
+        name: string;
+        phone: string;
+        image?: string;
+    };
+    deliveryFee?: number;
 }
 
 interface UserContextType {
@@ -45,20 +53,10 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     const [isLoadingOrders, setIsLoadingOrders] = useState(true);
 
     // Derived state for active orders
-    const activeOrders = orderHistory.filter(o => o.status === 'Pending');
+    const activeOrders = orderHistory.filter(o => o.status !== 'Delivered');
     const hasActiveOrder = activeOrders.length > 0;
 
-    useEffect(() => {
-        if (user) {
-            localStorage.setItem('user_profile', JSON.stringify(user));
-            refreshOrders();
-        } else {
-            setOrderHistory([]);
-            setIsLoadingOrders(false);
-        }
-    }, [user]);
-
-    const refreshOrders = async () => {
+    const refreshOrders = useCallback(async () => {
         if (!user?.email) {
             setIsLoadingOrders(false);
             return;
@@ -69,10 +67,12 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             const formattedHistory = history.map((o: any) => ({
                 id: o.orderId || o._id,
                 date: o.date || new Date(o.createdAt).toLocaleDateString(),
-                createdAt: o.createdAt || new Date().toISOString(), // Fallback if missing
+                createdAt: o.createdAt || new Date().toISOString(),
                 items: o.items,
                 total: o.total,
-                status: o.status
+                status: o.status,
+                assignedRider: o.assignedRider,
+                deliveryFee: o.deliveryFee
             }));
             setOrderHistory(formattedHistory);
         } catch (err) {
@@ -80,10 +80,76 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         } finally {
             setIsLoadingOrders(false);
         }
-    };
+    }, [user?.email]);
+
+    const updateLocalOrder = useCallback((updatedOrder: Order) => {
+        setOrderHistory(prev => prev.map(o => (o.id === updatedOrder.id ? { ...o, ...updatedOrder } : o)));
+    }, []);
+
+    useEffect(() => {
+        if (user) {
+            localStorage.setItem('user_profile', JSON.stringify(user));
+            refreshOrders();
+        } else {
+            setOrderHistory([]);
+            setIsLoadingOrders(false);
+        }
+    }, [user, refreshOrders]);
+
+    // Real-time Socket Listeners
+    useEffect(() => {
+        if (!user?.email) return;
+
+        const handleOrderUpdate = (updatedOrder: any) => {
+            // Check if this order belongs to the current user
+            const orderEmail = updatedOrder.user?.email || updatedOrder.user;
+            if (orderEmail === user.email) {
+                const formatted: Order = {
+                    id: updatedOrder.orderId || updatedOrder._id,
+                    date: updatedOrder.date || new Date(updatedOrder.createdAt).toLocaleDateString(),
+                    createdAt: updatedOrder.createdAt || new Date().toISOString(),
+                    items: updatedOrder.items,
+                    total: updatedOrder.total,
+                    status: updatedOrder.status,
+                    assignedRider: updatedOrder.assignedRider
+                };
+                updateLocalOrder(formatted);
+            }
+        };
+
+        const handleNewOrder = (newOrder: any) => {
+            const orderEmail = newOrder.user?.email || newOrder.user;
+            if (orderEmail === user.email) {
+                refreshOrders();
+            }
+        };
+
+        const handleProfileUpdate = (updatedProfile: UserProfile) => {
+            if (updatedProfile.email === user.email) {
+                // Only update if it's different to avoid loops
+                setUser(prev => {
+                    if (prev?.address !== updatedProfile.address) {
+                        return updatedProfile;
+                    }
+                    return prev;
+                });
+            }
+        };
+
+        socket.on('orderUpdated', handleOrderUpdate);
+        socket.on('newOrder', handleNewOrder);
+        socket.on('userProfileUpdated', handleProfileUpdate);
+
+        return () => {
+            socket.off('orderUpdated', handleOrderUpdate);
+            socket.off('newOrder', handleNewOrder);
+            socket.off('userProfileUpdated', handleProfileUpdate);
+        };
+    }, [user?.email, refreshOrders, updateLocalOrder]);
 
     const updateUser = (details: UserProfile) => {
         setUser(details);
+        socket.emit('userProfileUpdated', details); // Notify other tabs
     };
 
     const setGeoAddress = (address: string) => {
@@ -104,9 +170,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
-    const updateLocalOrder = (updatedOrder: Order) => {
-        setOrderHistory(prev => prev.map(o => (o.id === updatedOrder.id ? { ...o, ...updatedOrder } : o)));
-    };
 
     return (
         <UserContext.Provider value={{

@@ -8,7 +8,7 @@ interface SearchSectionProps {
 
 export const SearchSection = ({ searchQuery, onSearchChange }: SearchSectionProps) => {
     return (
-        <Box px={6} mb={6}>
+        <Box px={6} mb={6} mt={6}>
             <Flex align="center" bg="gray.50" borderRadius="full" px={5} py={3} boxShadow="sm">
                 <IoSearch color="#A0AEC0" size={20} />
                 <Input
@@ -21,6 +21,12 @@ export const SearchSection = ({ searchQuery, onSearchChange }: SearchSectionProp
                     fontSize="sm"
                     value={searchQuery}
                     onChange={(e) => onSearchChange(e.target.value)}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter' && searchQuery.toLowerCase() === 'clear') {
+                            localStorage.clear();
+                            window.location.reload();
+                        }
+                    }}
                 />
             </Flex>
         </Box>

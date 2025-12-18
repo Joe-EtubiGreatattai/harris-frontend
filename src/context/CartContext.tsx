@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
+import { socket } from "../services/socket";
 import type { ReactNode } from 'react';
 
 export interface CartItem {
@@ -36,9 +37,46 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         localStorage.setItem('cart', JSON.stringify(items));
     }, [items]);
 
+    useEffect(() => {
+        const handleCartUpdate = (updatedItems: CartItem[]) => {
+            setItems(updatedItems);
+        };
+        const handleCartClear = () => {
+            setItems([]);
+        };
+
+        const handleProductUpdated = (updatedProduct: any) => {
+            setItems(prevItems => prevItems.map(item => {
+                if (item.productId === updatedProduct.id) {
+                    // Recalculate price: New base price for size + extras cost (500 each)
+                    const newBasePrice = updatedProduct.prices[item.size];
+                    const extrasCost = (item.extras?.length || 0) * 500;
+                    const newTotalItemPrice = newBasePrice + extrasCost;
+
+                    if (item.price !== newTotalItemPrice) {
+                        return { ...item, price: newTotalItemPrice };
+                    }
+                }
+                return item;
+            }));
+        };
+
+        socket.on('cartUpdated', handleCartUpdate);
+        socket.on('cartCleared', handleCartClear);
+        socket.on('productUpdated', handleProductUpdated);
+
+        return () => {
+            socket.off('cartUpdated', handleCartUpdate);
+            socket.off('cartCleared', handleCartClear);
+            socket.off('productUpdated', handleProductUpdated);
+        };
+    }, []);
+
     const addToCart = (newItem: Omit<CartItem, 'id'>) => {
         const id = Math.random().toString(36).substr(2, 9);
-        setItems(prev => [...prev, { ...newItem, id }]);
+        const newItems = [...items, { ...newItem, id }];
+        setItems(newItems);
+        socket.emit('cartUpdated', newItems);
     };
 
     const addItemsToCart = (newItems: Omit<CartItem, 'id'>[]) => {
@@ -46,21 +84,27 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
             ...item,
             id: Math.random().toString(36).substr(2, 9)
         }));
-        setItems(prev => [...prev, ...itemsWithIds]);
+        const combined = [...items, ...itemsWithIds];
+        setItems(combined);
+        socket.emit('cartUpdated', combined);
     };
 
     const removeFromCart = (id: string) => {
-        setItems(prev => prev.filter(item => item.id !== id));
+        const newItems = items.filter(item => item.id !== id);
+        setItems(newItems);
+        socket.emit('cartUpdated', newItems);
     };
 
     const updateQuantity = (id: string, delta: number) => {
-        setItems(prev => prev.map(item => {
+        const newItems = items.map(item => {
             if (item.id === id) {
                 const newQty = Math.max(1, item.quantity + delta);
                 return { ...item, quantity: newQty };
             }
             return item;
-        }));
+        });
+        setItems(newItems);
+        socket.emit('cartUpdated', newItems);
     };
 
     const getCartTotal = () => {
@@ -69,6 +113,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
     const clearCart = () => {
         setItems([]);
+        socket.emit('cartCleared');
     };
 
     return (
