@@ -1,4 +1,4 @@
-import { Box, Flex, Text, Button, Input, VStack, Image, Spinner, Center, IconButton } from "@chakra-ui/react";
+import { Box, Flex, Text, Button, Input, VStack, Image, Spinner, Center } from "@chakra-ui/react";
 import { useState, useRef } from "react";
 import { IoClose, IoCloudUploadOutline } from "react-icons/io5";
 import { api } from "../../services/api";

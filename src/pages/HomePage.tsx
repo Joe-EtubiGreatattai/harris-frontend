@@ -6,6 +6,7 @@ import { CategoryFilter } from "../components/home/CategoryFilter"
 import { PopularSection } from "../components/home/PopularSection"
 import { api } from "../services/api"
 import { socket } from "../services/socket"
+import type { Product } from "../data/menu"
 
 export const HomePage = () => {
     const [selectedCategory, setSelectedCategory] = useState("Pizza")
