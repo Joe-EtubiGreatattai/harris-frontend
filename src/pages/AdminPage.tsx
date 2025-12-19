@@ -39,6 +39,14 @@ export const AdminPage = () => {
                         : order
                 )
             );
+
+            // Also update selected view if it matches
+            setSelectedOrder((prev: any) => {
+                if (prev && (prev._id === updatedOrder._id || prev.orderId === updatedOrder.orderId)) {
+                    return updatedOrder;
+                }
+                return prev;
+            });
         });
 
         socket.on('productCreated', (newProduct: any) => {
@@ -61,11 +69,16 @@ export const AdminPage = () => {
             );
         });
 
+        socket.on('ratingCreated', (newRating: any) => {
+            setRatings((prev) => [newRating, ...prev]);
+        });
+
         return () => {
             socket.off('newOrder');
             socket.off('orderUpdated');
             socket.off('productUpdated');
             socket.off('riderUpdated');
+            socket.off('ratingCreated');
         };
     }, []);
 
@@ -95,7 +108,7 @@ export const AdminPage = () => {
         try {
             // Optimistic update
             setOrders(prev => prev.map(o => o.orderId === orderId ? { ...o, status } : o));
-            await api.updateOrderStatus(orderId, status);
+            await api.updateOrderStatus(orderId, status, "Admin");
             // Socket will confirm the update, but optimistic makes it feel instant
         } catch (error) {
             alert("Update failed");

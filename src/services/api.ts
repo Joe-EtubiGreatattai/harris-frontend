@@ -36,11 +36,11 @@ export const api = {
         return response.json();
     },
 
-    updateOrderStatus: async (id: string, status: string) => {
+    updateOrderStatus: async (id: string, status: string, source?: 'Admin' | 'User') => {
         const response = await fetch(`${API_URL}/orders/${id}/status`, {
             method: "PATCH",
             headers,
-            body: JSON.stringify({ status }),
+            body: JSON.stringify({ status, source }),
         });
         if (!response.ok) throw new Error("Failed to update order status");
         return response.json();

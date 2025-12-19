@@ -62,6 +62,9 @@ export const OrderDetailsView = ({ order, onBack }: OrderDetailsViewProps) => {
                                 <Text fontSize="sm" color="gray.500">
                                     {new Date(order.deliveredAt).toLocaleDateString()}
                                 </Text>
+                                <Text fontSize="xs" color="blue.500" fontWeight="bold" mt={1}>
+                                    By: {order.deliveredBy || 'Admin'}
+                                </Text>
                             </>
                         ) : (
                             <Text color="gray.400" fontStyle="italic">Not delivered yet</Text>

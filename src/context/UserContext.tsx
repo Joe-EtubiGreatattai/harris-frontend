@@ -172,7 +172,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
     const completeOrder = async (orderId: string) => {
         try {
-            await api.updateOrderStatus(orderId, "Delivered");
+            await api.updateOrderStatus(orderId, "Delivered", "User");
             refreshOrders();
         } catch (err) {
             console.error("Failed to complete order", err);
