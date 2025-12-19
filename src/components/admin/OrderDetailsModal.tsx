@@ -1,5 +1,5 @@
-import { Box, Flex, Text, VStack, Button, Badge, Image, IconButton } from "@chakra-ui/react"
-import { IoClose, IoPerson, IoLocation, IoCall } from "react-icons/io5"
+import { Box, Flex, Text, VStack, Button, Badge, Image, IconButton, SimpleGrid } from "@chakra-ui/react"
+import { IoClose, IoPerson, IoLocation, IoCall, IoBicycle } from "react-icons/io5"
 import { motion } from "framer-motion"
 import React from "react"
 
@@ -59,30 +59,60 @@ export const OrderDetailsModal = ({ isOpen, onClose, order }: OrderDetailsModalP
 
                     {/* Scrollable Content */}
                     <Box p={6} overflowY="auto" flex={1}>
-                        {/* Status Bar */}
-                        <Flex mb={6} align="center" gap={3}>
-                            <Badge
-                                colorScheme={order.status === 'Delivered' ? 'green' : 'orange'}
-                                fontSize="md"
-                                px={3} py={1}
-                                borderRadius="full"
-                            >
-                                {order.status}
-                            </Badge>
-                            <Text color="gray.500" fontSize="sm">
-                                {new Date(order.createdAt).toLocaleString()}
-                            </Text>
+                        {/* Status Bar & Time */}
+                        <Flex mb={6} align="center" justify="space-between" bg="gray.50" p={3} borderRadius="lg">
+                            <Flex align="center" gap={3}>
+                                <Badge
+                                    colorScheme={order.status === 'Delivered' ? 'green' : 'orange'}
+                                    fontSize="md"
+                                    px={3} py={1}
+                                    borderRadius="full"
+                                >
+                                    {order.status}
+                                </Badge>
+                                <Text color="gray.500" fontSize="sm">
+                                    {new Date(order.createdAt).toLocaleString()}
+                                </Text>
+                            </Flex>
+
+                            {order.status === 'Delivered' && order.deliveredAt && (
+                                <Box textAlign="right">
+                                    <Text fontSize="xs" color="gray.500" textTransform="uppercase" fontWeight="bold">Time Spent</Text>
+                                    <Text fontSize="sm" fontWeight="bold">
+                                        {calculateDuration(order.createdAt, order.deliveredAt)}
+                                    </Text>
+                                </Box>
+                            )}
                         </Flex>
 
-                        {/* Customer Info */}
-                        <Box mb={8} bg="blue.50" p={4} borderRadius="xl">
-                            <Text fontWeight="bold" mb={3} display="flex" alignItems="center" gap={2}>
-                                <IoPerson /> Customer Information
-                            </Text>
-                            <SimpleRow label="Name/Email" value={order.user?.email || "N/A"} />
-                            <SimpleRow label="Phone" value={order.user?.phone || "N/A"} icon={<IoCall />} />
-                            <SimpleRow label="Address" value={order.user?.address || "N/A"} icon={<IoLocation />} />
-                        </Box>
+                        {/* Customer & Rider Info */}
+                        <SimpleGrid columns={{ base: 1, md: 2 }} gap={4} mb={8}>
+                            {/* Customer */}
+                            <Box bg="blue.50" p={4} borderRadius="xl">
+                                <Text fontWeight="bold" mb={3} display="flex" alignItems="center" gap={2}>
+                                    <IoPerson /> Customer
+                                </Text>
+                                <SimpleRow label="Name/Email" value={order.user?.email || "N/A"} />
+                                <SimpleRow label="Phone" value={order.user?.phone || "N/A"} icon={<IoCall />} />
+                                <SimpleRow label="Address" value={order.user?.address || "N/A"} icon={<IoLocation />} />
+                            </Box>
+
+                            {/* Rider */}
+                            {order.assignedRider && typeof order.assignedRider === 'object' ? (
+                                <Box bg="orange.50" p={4} borderRadius="xl">
+                                    <Text fontWeight="bold" mb={3} display="flex" alignItems="center" gap={2}>
+                                        <IoBicycle /> Rider Details
+                                    </Text>
+                                    <SimpleRow label="Name" value={order.assignedRider.name} />
+                                    <SimpleRow label="Phone" value={order.assignedRider.phone} icon={<IoCall />} />
+                                    <SimpleRow label="Status" value={order.assignedRider.status} />
+                                </Box>
+                            ) : (
+                                <Box bg="gray.50" p={4} borderRadius="xl" display="flex" alignItems="center" justifyContent="center">
+                                    <Text color="gray.500" fontStyle="italic">No Rider Assigned</Text>
+                                </Box>
+                            )}
+                        </SimpleGrid>
 
                         {/* Order Items */}
                         <Text fontWeight="bold" mb={4}>Items Ordered</Text>
@@ -154,3 +184,18 @@ const SimpleRow = ({ label, value, icon }: { label: string, value: string, icon?
         <Text fontSize="sm" fontWeight="medium" flex={1}>{value}</Text>
     </Flex>
 );
+
+const calculateDuration = (start: string, end: string) => {
+    const startTime = new Date(start).getTime();
+    const endTime = new Date(end).getTime();
+    const diff = endTime - startTime;
+
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+
+    if (hours > 0) {
+        return `${hours}h ${remainingMinutes}m`;
+    }
+    return `${minutes} mins`;
+};
