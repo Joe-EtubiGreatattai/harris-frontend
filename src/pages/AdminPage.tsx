@@ -6,6 +6,7 @@ import { api } from "../services/api";
 import { ProductModal } from "../components/admin/ProductModal";
 import { ReviewsTab } from "../components/admin/ReviewsTab";
 import { RiderModal } from "../components/admin/RiderModal";
+import { OrderDetailsModal } from "../components/admin/OrderDetailsModal";
 import { socket } from "../services/socket";
 
 export const AdminPage = () => {
@@ -17,6 +18,7 @@ export const AdminPage = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [isProductModalOpen, setIsProductModalOpen] = useState(false);
     const [isRiderModalOpen, setIsRiderModalOpen] = useState(false);
+    const [selectedOrder, setSelectedOrder] = useState<any>(null); // For details modal
     const [editingProduct, setEditingProduct] = useState<any>(null);
     const [activeTab, setActiveTab] = useState<'orders' | 'products' | 'riders' | 'settings' | 'reviews'>('orders');
     const navigate = useNavigate();
@@ -196,6 +198,16 @@ export const AdminPage = () => {
     const handleLogout = () => {
         localStorage.removeItem('adminToken');
         navigate('/login');
+    };
+
+    const handleViewOrder = (orderId: string) => {
+        const order = orders.find(o => o.orderId === orderId);
+        if (order) {
+            setSelectedOrder(order);
+        } else {
+            console.warn("Order not found for ID:", orderId);
+            // Optional: You could fetch the specific order from API if not in the list
+        }
     };
 
     if (isLoading) {
@@ -527,7 +539,7 @@ export const AdminPage = () => {
                 )}
 
                 {activeTab === 'reviews' && (
-                    <ReviewsTab ratings={ratings} />
+                    <ReviewsTab ratings={ratings} onViewOrder={handleViewOrder} />
                 )}
             </Box>
 
@@ -542,6 +554,12 @@ export const AdminPage = () => {
                 isOpen={isRiderModalOpen}
                 onClose={() => setIsRiderModalOpen(false)}
                 onSave={handleSaveRider}
+            />
+
+            <OrderDetailsModal
+                isOpen={!!selectedOrder}
+                onClose={() => setSelectedOrder(null)}
+                order={selectedOrder}
             />
         </Box >
     );

@@ -2,7 +2,7 @@ import { Box, Flex, Text, SimpleGrid, Badge } from "@chakra-ui/react"
 import { BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, Cell } from 'recharts'
 import { IoStar } from "react-icons/io5"
 
-export const ReviewsTab = ({ ratings }: { ratings: any[] }) => {
+export const ReviewsTab = ({ ratings, onViewOrder }: { ratings: any[], onViewOrder: (orderId: string) => void }) => {
     // Calculate Stats
     const totalReviews = ratings.length
     const averageRating = totalReviews > 0
@@ -75,6 +75,10 @@ export const ReviewsTab = ({ ratings }: { ratings: any[] }) => {
                             gridTemplateColumns={{ md: "120px 100px 1fr 120px" }}
                             flexDirection={{ base: "column" }}
                             gap={{ base: 2, md: 4 }}
+                            onClick={() => onViewOrder(review.orderId)}
+                            cursor="pointer"
+                            _hover={{ bg: "gray.50" }}
+                            transition="background-color 0.2s"
                         >
                             <Box>
                                 <Text fontWeight="bold" fontSize="sm">#{review.orderId}</Text>
