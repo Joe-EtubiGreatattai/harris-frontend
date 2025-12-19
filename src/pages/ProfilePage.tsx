@@ -54,6 +54,46 @@ export const ProfilePage = () => {
                 </Text>
             </Flex>
 
+            {/* Notifications */}
+            <Box px={6} mb={8}>
+                <Text fontWeight="bold" fontSize="lg" mb={4} color="gray.800">Notifications</Text>
+                <Box bg="white" p={4} borderRadius="2xl" shadow="sm">
+                    <HStack justify="space-between">
+                        <HStack gap={4}>
+                            <Flex bg="orange.50" p={2} borderRadius="xl" color="orange.500">
+                                <IoNotificationsOutline size={20} />
+                            </Flex>
+                            <Box>
+                                <Text fontWeight="bold" fontSize="sm">Push Notifications</Text>
+                                <Text fontSize="xs" color="gray.500">
+                                    {pushNotificationService.checkPermission() === 'granted'
+                                        ? 'Notifications are enabled'
+                                        : 'Stay updated with order status'}
+                                </Text>
+                            </Box>
+                        </HStack>
+                        <Button
+                            size="sm"
+                            colorPalette={pushNotificationService.checkPermission() === 'granted' ? "gray" : "red"}
+                            variant={pushNotificationService.checkPermission() === 'granted' ? "ghost" : "solid"}
+                            borderRadius="full"
+                            onClick={async () => {
+                                if (user?.email) {
+                                    const permission = await pushNotificationService.requestPermission();
+                                    if (permission === 'granted') {
+                                        await pushNotificationService.subscribeUser(user.email);
+                                        window.location.reload(); // Refresh to reflect status update
+                                    }
+                                }
+                            }}
+                            disabled={pushNotificationService.checkPermission() === 'granted'}
+                        >
+                            {pushNotificationService.checkPermission() === 'granted' ? <IoNotifications /> : "Enable"}
+                        </Button>
+                    </HStack>
+                </Box>
+            </Box>
+
             {/* Saved Addresses */}
             <Box px={6} mb={8}>
                 <Text fontWeight="bold" fontSize="lg" mb={4} color="gray.800">Saved Addresses</Text>
