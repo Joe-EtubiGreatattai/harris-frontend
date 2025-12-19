@@ -32,28 +32,30 @@ export const ReviewsTab = ({ ratings, onViewOrder }: { ratings: any[], onViewOrd
                 </Box>
 
                 {/* Chart Card */}
-                <Box bg="white" p={6} borderRadius="xl" shadow="sm" border="1px solid" borderColor="gray.100" h="300px">
+                <Flex direction="column" bg="white" p={6} borderRadius="xl" shadow="sm" border="1px solid" borderColor="gray.100" h="300px">
                     <Text fontSize="sm" fontWeight="bold" mb={4}>Rating Distribution</Text>
-                    <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                            <Pie
-                                data={distribution}
-                                cx="50%"
-                                cy="50%"
-                                innerRadius={60}
-                                outerRadius={80}
-                                paddingAngle={5}
-                                dataKey="value"
-                            >
-                                {distribution.map((_, index) => (
-                                    <Cell key={`cell-${index}`} fill={COLORS[index]} />
-                                ))}
-                            </Pie>
-                            <RechartsTooltip />
-                            <Legend verticalAlign="bottom" height={36} iconType="circle" />
-                        </PieChart>
-                    </ResponsiveContainer>
-                </Box>
+                    <Box flex={1} minH={0} w="100%">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                                <Pie
+                                    data={distribution}
+                                    cx="50%"
+                                    cy="50%"
+                                    innerRadius={60}
+                                    outerRadius={80}
+                                    paddingAngle={5}
+                                    dataKey="value"
+                                >
+                                    {distribution.map((_, index) => (
+                                        <Cell key={`cell-${index}`} fill={COLORS[index]} />
+                                    ))}
+                                </Pie>
+                                <RechartsTooltip />
+                                <Legend verticalAlign="bottom" height={36} iconType="circle" />
+                            </PieChart>
+                        </ResponsiveContainer>
+                    </Box>
+                </Flex>
             </SimpleGrid>
 
             {/* Reviews List (Custom "Table") */}
