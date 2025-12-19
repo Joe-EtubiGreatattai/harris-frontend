@@ -1,8 +1,9 @@
 import { Box, Flex, Image, Text, Button, IconButton, Badge, Textarea, Center, Spinner } from "@chakra-ui/react"
-import { IoChevronBack, IoHeartOutline, IoAdd, IoRemove, IoCart } from "react-icons/io5"
+import { IoChevronBack, IoHeartOutline, IoAdd, IoRemove, IoCart, IoHeart } from "react-icons/io5"
 import { useParams, useNavigate } from "react-router-dom"
 import { useState, useEffect } from "react"
 import { useCart } from "../context/CartContext"
+import { useUser } from "../context/UserContext"
 import { api } from "../services/api"
 import { socket } from "../services/socket"
 import { motion } from "framer-motion"
@@ -26,6 +27,7 @@ export const ProductPage = () => {
     const { id } = useParams<{ id: string }>()
     const navigate = useNavigate()
     const { addToCart } = useCart()
+    const { toggleFavorite, isFavorite } = useUser()
 
     const [product, setProduct] = useState<any>(null)
     const [loading, setLoading] = useState(true)
@@ -151,10 +153,12 @@ export const ProductPage = () => {
                             variant="ghost"
                             bg="white/30"
                             backdropFilter="blur(10px)"
-                            color="white"
+                            color={isFavorite(product?.id) ? "red.500" : "white"}
                             borderRadius="full"
+                            onClick={() => product && toggleFavorite(product.id)}
+                            _hover={{ bg: "white/50", color: isFavorite(product?.id) ? "red.600" : "white" }}
                         >
-                            <IoHeartOutline size={24} />
+                            {isFavorite(product?.id) ? <IoHeart size={24} /> : <IoHeartOutline size={24} />}
                         </IconButton>
                     </Flex>
                 </Box>
