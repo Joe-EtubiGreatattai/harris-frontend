@@ -40,6 +40,7 @@ export const FavoritesSection = ({ products }: FavoritesSectionProps) => {
                             isMystery={product.id === "create-your-own"}
                             isBestSeller={product.isBestSeller}
                             isAvailable={product.isAvailable}
+                            category={product.category}
                         />
                     </Box>
                 ))}

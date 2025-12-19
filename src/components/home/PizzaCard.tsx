@@ -2,6 +2,8 @@ import { Box, Image, Text, Flex, IconButton, Center, Badge } from "@chakra-ui/re
 import { IoAdd, IoHelp, IoHeart, IoHeartOutline } from "react-icons/io5"
 import { useNavigate } from "react-router-dom"
 import { useUser } from "../../context/UserContext"
+import { useCart } from "../../context/CartContext"
+import { toaster } from "../ui/toaster"
 import { motion } from "framer-motion"
 
 const MotionBox = motion.create(Box)
@@ -16,11 +18,13 @@ interface PizzaCardProps {
     isMystery?: boolean;
     isBestSeller?: boolean;
     isAvailable?: boolean;
+    category: string;
 }
 
-export const PizzaCard = ({ id, name, description, price, prices, image, isMystery, isBestSeller, isAvailable }: PizzaCardProps) => {
+export const PizzaCard = ({ id, name, description, price, prices, image, isMystery, isBestSeller, isAvailable, category }: PizzaCardProps) => {
     const navigate = useNavigate()
     const { toggleFavorite, isFavorite } = useUser()
+    const { addToCart } = useCart()
     const favorited = isFavorite(id)
 
     // Calculate display price: if prices object exists, show lowest
@@ -30,6 +34,42 @@ export const PizzaCard = ({ id, name, description, price, prices, image, isMyste
         : (typeof price === 'number' ? price : 0);
 
     const hasMultipleSizes = prices && Object.keys(prices).length > 1;
+
+    const handleAddToCart = (e: React.MouseEvent) => {
+        e.stopPropagation();
+
+        // Determine size and price
+        let selectedSize = 'Standard';
+        let selectedPrice = displayPrice;
+
+        if (prices && Object.keys(prices).length > 0) {
+            // Find key for lowest price
+            const entry = Object.entries(prices).sort((a, b) => a[1] - b[1])[0];
+            if (entry) {
+                selectedSize = entry[0];
+                selectedPrice = entry[1];
+            }
+        }
+
+        addToCart({
+            productId: id,
+            name,
+            image,
+            size: selectedSize,
+            price: selectedPrice,
+            quantity: 1,
+            extras: [],
+            note: '',
+            category
+        });
+
+        toaster.create({
+            title: "Added to cart",
+            description: `${name} (${selectedSize}) added!`,
+            type: "success",
+            duration: 2000,
+        });
+    };
 
     return (
         <MotionBox
@@ -145,6 +185,7 @@ export const PizzaCard = ({ id, name, description, price, prices, image, isMyste
                         size="sm"
                         _hover={{ bg: "red.600" }}
                         boxShadow="lg"
+                        onClick={handleAddToCart}
                     >
                         <IoAdd size={20} />
                     </IconButton>
