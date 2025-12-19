@@ -1,5 +1,5 @@
 import { Box, Flex, Text, SimpleGrid, Badge } from "@chakra-ui/react"
-import { BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, Cell } from 'recharts'
+import { PieChart, Pie, Cell, Tooltip as RechartsTooltip, ResponsiveContainer, Legend } from 'recharts'
 import { IoStar } from "react-icons/io5"
 
 export const ReviewsTab = ({ ratings, onViewOrder }: { ratings: any[], onViewOrder: (orderId: string) => void }) => {
@@ -11,8 +11,8 @@ export const ReviewsTab = ({ ratings, onViewOrder }: { ratings: any[], onViewOrd
 
     // Prepare Chart Data
     const distribution = [5, 4, 3, 2, 1].map(star => ({
-        star: `${star} Stars`,
-        count: ratings.filter(r => r.rating === star).length
+        name: `${star} Stars`,
+        value: ratings.filter(r => r.rating === star).length,
     }))
 
     const COLORS = ['#48BB78', '#38B2AC', '#ECC94B', '#ED8936', '#F56565'];
@@ -32,19 +32,26 @@ export const ReviewsTab = ({ ratings, onViewOrder }: { ratings: any[], onViewOrd
                 </Box>
 
                 {/* Chart Card */}
-                <Box bg="white" p={6} borderRadius="xl" shadow="sm" border="1px solid" borderColor="gray.100" h="250px">
+                <Box bg="white" p={6} borderRadius="xl" shadow="sm" border="1px solid" borderColor="gray.100" h="300px">
                     <Text fontSize="sm" fontWeight="bold" mb={4}>Rating Distribution</Text>
                     <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={distribution} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                            <XAxis type="number" hide />
-                            <YAxis dataKey="star" type="category" width={60} tick={{ fontSize: 12 }} />
-                            <RechartsTooltip cursor={{ fill: 'transparent' }} />
-                            <Bar dataKey="count" radius={[0, 4, 4, 0]} barSize={20}>
+                        <PieChart>
+                            <Pie
+                                data={distribution}
+                                cx="50%"
+                                cy="50%"
+                                innerRadius={60}
+                                outerRadius={80}
+                                paddingAngle={5}
+                                dataKey="value"
+                            >
                                 {distribution.map((_, index) => (
                                     <Cell key={`cell-${index}`} fill={COLORS[index]} />
                                 ))}
-                            </Bar>
-                        </BarChart>
+                            </Pie>
+                            <RechartsTooltip />
+                            <Legend verticalAlign="bottom" height={36} iconType="circle" />
+                        </PieChart>
                     </ResponsiveContainer>
                 </Box>
             </SimpleGrid>
