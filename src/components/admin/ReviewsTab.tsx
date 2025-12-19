@@ -65,9 +65,10 @@ export const ReviewsTab = ({ ratings, onViewOrder }: { ratings: any[], onViewOrd
                 </Box>
 
                 {/* Header */}
-                <Box bg="gray.50" px={4} py={3} borderBottom="1px solid" borderColor="gray.100" display={{ base: "none", md: "grid" }} gridTemplateColumns="120px 100px 1fr 120px" gap={4}>
+                <Box bg="gray.50" px={4} py={3} borderBottom="1px solid" borderColor="gray.100" display={{ base: "none", md: "grid" }} gridTemplateColumns="120px 80px 100px 1fr 120px" gap={4}>
                     <Text fontSize="xs" fontWeight="bold" color="gray.500" textTransform="uppercase">Order ID</Text>
                     <Text fontSize="xs" fontWeight="bold" color="gray.500" textTransform="uppercase">Rating</Text>
+                    <Text fontSize="xs" fontWeight="bold" color="gray.500" textTransform="uppercase">Sentiment</Text>
                     <Text fontSize="xs" fontWeight="bold" color="gray.500" textTransform="uppercase">Comment</Text>
                     <Text fontSize="xs" fontWeight="bold" color="gray.500" textTransform="uppercase">Date</Text>
                 </Box>
@@ -81,7 +82,7 @@ export const ReviewsTab = ({ ratings, onViewOrder }: { ratings: any[], onViewOrd
                             borderBottom="1px solid"
                             borderColor="gray.100"
                             display={{ base: "flex", md: "grid" }}
-                            gridTemplateColumns={{ md: "120px 100px 1fr 120px" }}
+                            gridTemplateColumns={{ md: "120px 80px 100px 1fr 120px" }}
                             flexDirection={{ base: "column" }}
                             gap={{ base: 2, md: 4 }}
                             onClick={() => onViewOrder(review.orderId)}
@@ -101,15 +102,19 @@ export const ReviewsTab = ({ ratings, onViewOrder }: { ratings: any[], onViewOrd
                                     </Badge>
                                     <IoStar size={12} color="#ECC94B" />
                                 </Flex>
-                                {review.sentiment && (
+                            </Box>
+
+                            <Box>
+                                {review.sentiment ? (
                                     <Badge
-                                        mt={1}
                                         colorScheme={review.sentiment === 'Positive' ? 'green' : review.sentiment === 'Negative' ? 'red' : 'gray'}
                                         variant="subtle"
                                         fontSize="xs"
                                     >
                                         {review.sentiment}
                                     </Badge>
+                                ) : (
+                                    <Text fontSize="xs" color="gray.400">-</Text>
                                 )}
                             </Box>
 
