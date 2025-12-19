@@ -8,10 +8,14 @@ import clarity from '@microsoft/clarity'
 const CLARITY_ID = "unc0mhfl0u"
 clarity.init(CLARITY_ID)
 
+import { AnimatePresence } from 'framer-motion'
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ChakraProvider value={defaultSystem}>
-      <App />
+      <AnimatePresence mode="wait">
+        <App />
+      </AnimatePresence>
     </ChakraProvider>
   </StrictMode>,
 )

@@ -9,6 +9,22 @@ import { PopularSectionSkeleton } from "../components/home/PizzaCardSkeleton"
 import { api } from "../services/api"
 import { socket } from "../services/socket"
 import type { Product } from "../data/menu"
+import { motion } from "framer-motion"
+
+const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+        opacity: 1,
+        transition: {
+            staggerChildren: 0.1
+        }
+    }
+}
+
+const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0 }
+}
 
 export const HomePage = () => {
     const [selectedCategory, setSelectedCategory] = useState("Pizza")
@@ -48,19 +64,34 @@ export const HomePage = () => {
     }, [])
 
     return (
-        <Box pb={20}>
-            <HomeHeader />
-            <SearchSection searchQuery={searchQuery} onSearchChange={setSearchQuery} />
+        <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+        >
+            <Box pb={20}>
+                <HomeHeader />
+                <SearchSection searchQuery={searchQuery} onSearchChange={setSearchQuery} />
 
-            {loading ? (
-                <PopularSectionSkeleton />
-            ) : (
-                <>
-                    {!searchQuery && <FavoritesSection products={products} />}
-                    <CategoryFilter selectedCategory={selectedCategory} onSelectCategory={setSelectedCategory} />
-                    <PopularSection selectedCategory={selectedCategory} searchQuery={searchQuery} products={products} />
-                </>
-            )}
-        </Box>
+                {loading ? (
+                    <PopularSectionSkeleton />
+                ) : (
+                    <motion.div variants={containerVariants} initial="hidden" animate="show">
+                        {!searchQuery && (
+                            <motion.div variants={itemVariants}>
+                                <FavoritesSection products={products} />
+                            </motion.div>
+                        )}
+                        <motion.div variants={itemVariants}>
+                            <CategoryFilter selectedCategory={selectedCategory} onSelectCategory={setSelectedCategory} />
+                        </motion.div>
+                        <motion.div variants={itemVariants}>
+                            <PopularSection selectedCategory={selectedCategory} searchQuery={searchQuery} products={products} />
+                        </motion.div>
+                    </motion.div>
+                )}
+            </Box>
+        </motion.div>
     )
 }

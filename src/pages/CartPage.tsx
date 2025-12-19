@@ -6,6 +6,23 @@ import { useUser } from "../context/UserContext"
 import { useNavigate } from "react-router-dom"
 import { CheckoutModal } from "../components/cart/CheckoutModal"
 import { api } from "../services/api"
+import { motion, AnimatePresence } from "framer-motion"
+
+const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+        opacity: 1,
+        transition: {
+            staggerChildren: 0.1
+        }
+    }
+}
+
+const itemVariants = {
+    hidden: { opacity: 0, x: -20 },
+    show: { opacity: 1, x: 0 },
+    exit: { opacity: 0, x: 20 }
+}
 
 export const CartPage = () => {
     const navigate = useNavigate()
@@ -98,129 +115,152 @@ export const CartPage = () => {
     }
 
     return (
-        <Box pb={0} bg="gray.50" minH="100vh">
-            <Flex align="center" px={6} py={6} bg="white" shadow="sm" position="sticky" top={0} zIndex={10}>
-                <IconButton
-                    aria-label="Back"
-                    variant="ghost"
-                    onClick={() => navigate(-1)}
-                >
-                    <IoChevronBack size={24} />
-                </IconButton>
-                <Text fontWeight="bold" fontSize="lg" flex={1} textAlign="center" mr={10}>My Cart</Text>
-            </Flex>
-
-            <Box p={6}>
-                {items.length === 0 ? (
-                    <Flex direction="column" align="center" justify="center" py={20}>
-                        <Text color="gray.400" fontSize="lg" mb={4}>Your cart is empty</Text>
-                        <Button colorScheme="red" variant="outline" onClick={() => navigate('/')}>
-                            See Menu
-                        </Button>
-                    </Flex>
-                ) : (
-                    items.map(item => (
-                        <Flex key={item.id} bg="white" p={4} borderRadius="2xl" mb={4} shadow="sm" align="center">
-                            <Image src={item.image} w="80px" h="80px" borderRadius="xl" objectFit="cover" mr={4} />
-                            <Box flex={1}>
-                                <Text fontWeight="bold" fontSize="md" color="gray.800" lineClamp={1}>{item.name}</Text>
-                                <Text color="gray.400" fontSize="xs" mb={1}>Size {item.size} • {item.extras.length > 0 ? `+${item.extras.length} extras` : 'No extras'}</Text>
-                                <Text fontWeight="bold" fontSize="md" color="red.500">₦{item.price.toLocaleString()}</Text>
-                            </Box>
-                            <Flex direction="column" align="flex-end" gap={2}>
-                                <Flex align="center" gap={3} bg="gray.100" borderRadius="full" px={3} py={1}>
-                                    {item.quantity === 1 ? (
-                                        <IoTrash size={16} color="#E53E3E" cursor="pointer" onClick={() => removeFromCart(item.id)} />
-                                    ) : (
-                                        <IoRemove size={16} color="#A0AEC0" cursor="pointer" onClick={() => updateQuantity(item.id, -1)} />
-                                    )}
-                                    <Text fontWeight="bold" fontSize="sm" color="gray.800">{item.quantity}</Text>
-                                    <IoAdd size={16} color="#2D3748" cursor="pointer" onClick={() => updateQuantity(item.id, 1)} />
-                                </Flex>
-                            </Flex>
-                        </Flex>
-                    ))
-                )}
-                <Box h="350px" />
-            </Box>
-
-            {/* Summary */}
-            {items.length > 0 && (
-                <Box position="fixed" bottom={0} left={0} right={0} bg="white" p={8} borderTopRadius="3xl" shadow="dark-lg" maxW="md" mx="auto" zIndex={20}>
-                    {/* Promo Code Input */}
-                    <Box mb={6}>
-                        <HStack gap={2}>
-                            <Input
-                                placeholder="Promo Code"
-                                value={promoInput}
-                                onChange={(e) => setPromoInput(e.target.value)}
-                                borderRadius="xl"
-                                bg="gray.50"
-                                border="none"
-                            />
-                            <Button
-                                colorPalette="red"
-                                variant="subtle"
-                                borderRadius="xl"
-                                onClick={handleApplyPromo}
-                            >
-                                Apply
-                            </Button>
-                        </HStack>
-                        {promoError && <Text color="red.500" fontSize="xs" mt={1}>Invalid promo code</Text>}
-                        {appliedPromoCode && (
-                            <Flex mt={2} align="center" gap={2}>
-                                <Badge colorPalette="green" variant="subtle" borderRadius="full" px={2}>
-                                    {appliedPromoCode} Applied
-                                </Badge>
-                                <Text fontSize="xs" color="green.600">-{discount}% off</Text>
-                            </Flex>
-                        )}
-                    </Box>
-
-                    <Flex justify="space-between" mb={3}>
-                        <Text color="gray.500">Subtotal</Text>
-                        <Text fontWeight="bold" color="gray.800">₦{subtotal.toLocaleString()}</Text>
-                    </Flex>
-                    {discount > 0 && (
-                        <Flex justify="space-between" mb={3}>
-                            <Text color="green.600">Discount ({appliedPromoCode})</Text>
-                            <Text fontWeight="bold" color="green.600">-₦{discountAmount.toLocaleString()}</Text>
-                        </Flex>
-                    )}
-                    <Flex justify="space-between" mb={5}>
-                        <Text color="gray.500">Delivery</Text>
-                        <Text fontWeight="bold" color="gray.800">₦{deliveryFee.toLocaleString()}</Text>
-                    </Flex>
-                    <Separator mb={6} borderColor="gray.100" />
-                    <Flex justify="space-between" mb={8}>
-                        <Text fontWeight="bold" fontSize="xl" color="gray.800">Total</Text>
-                        <Text fontWeight="bold" fontSize="2xl" color="gray.800">₦{total.toLocaleString()}</Text>
-                    </Flex>
-
-                    <Button
-                        bg="black"
-                        color="white"
-                        w="full"
-                        size="lg"
-                        borderRadius="xl"
-                        py={7}
-                        fontSize="lg"
-                        _hover={{ bg: "gray.800" }}
-                        onClick={handleCheckout}
+        <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+        >
+            <Box pb={0} bg="gray.50" minH="100vh">
+                <Flex align="center" px={6} py={6} bg="white" shadow="sm" position="sticky" top={0} zIndex={10}>
+                    <IconButton
+                        aria-label="Back"
+                        variant="ghost"
+                        onClick={() => navigate(-1)}
                     >
-                        Checkout
-                    </Button>
-                </Box>
-            )}
+                        <IoChevronBack size={24} />
+                    </IconButton>
+                    <Text fontWeight="bold" fontSize="lg" flex={1} textAlign="center" mr={10}>My Cart</Text>
+                </Flex>
 
-            {/* Checkout Modal */}
-            <CheckoutModal
-                isOpen={open}
-                onClose={onClose}
-                onConfirm={proceedToOrder}
-                isLoading={isSubmitting}
-            />
-        </Box>
+                <Box p={6}>
+                    {items.length === 0 ? (
+                        <Flex direction="column" align="center" justify="center" py={20}>
+                            <Text color="gray.400" fontSize="lg" mb={4}>Your cart is empty</Text>
+                            <Button colorScheme="red" variant="outline" onClick={() => navigate('/')}>
+                                See Menu
+                            </Button>
+                        </Flex>
+                    ) : (
+                        <motion.div variants={containerVariants} initial="hidden" animate="show">
+                            <AnimatePresence mode="popLayout">
+                                {items.map(item => (
+                                    <motion.div key={item.id} variants={itemVariants} layout exit={{ opacity: 0, x: 20 }}>
+                                        <Flex bg="white" p={4} borderRadius="2xl" mb={4} shadow="sm" align="center">
+                                            <Image src={item.image} w="80px" h="80px" borderRadius="xl" objectFit="cover" mr={4} />
+                                            <Box flex={1}>
+                                                <Text fontWeight="bold" fontSize="md" color="gray.800" lineClamp={1}>{item.name}</Text>
+                                                <Text color="gray.400" fontSize="xs" mb={1}>Size {item.size} • {item.extras.length > 0 ? `+${item.extras.length} extras` : 'No extras'}</Text>
+                                                <Text fontWeight="bold" fontSize="md" color="red.500">₦{item.price.toLocaleString()}</Text>
+                                            </Box>
+                                            <Flex direction="column" align="flex-end" gap={2}>
+                                                <Flex align="center" gap={3} bg="gray.100" borderRadius="full" px={3} py={1}>
+                                                    {item.quantity === 1 ? (
+                                                        <IoTrash size={16} color="#E53E3E" cursor="pointer" onClick={() => removeFromCart(item.id)} />
+                                                    ) : (
+                                                        <IoRemove size={16} color="#A0AEC0" cursor="pointer" onClick={() => updateQuantity(item.id, -1)} />
+                                                    )}
+                                                    <Text fontWeight="bold" fontSize="sm" color="gray.800">{item.quantity}</Text>
+                                                    <IoAdd size={16} color="#2D3748" cursor="pointer" onClick={() => updateQuantity(item.id, 1)} />
+                                                </Flex>
+                                            </Flex>
+                                        </Flex>
+                                    </motion.div>
+                                ))}
+                            </AnimatePresence>
+                        </motion.div>
+                    )}
+                    <Box h="350px" />
+                </Box>
+
+                {/* Summary */}
+                <AnimatePresence>
+                    {items.length > 0 && (
+                        <motion.div
+                            initial={{ y: 100, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            exit={{ y: 100, opacity: 0 }}
+                            transition={{ type: 'spring', damping: 20 }}
+                            style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 20 }}
+                        >
+                            <Box bg="white" p={8} borderTopRadius="3xl" shadow="dark-lg" maxW="md" mx="auto">
+                                {/* Promo Code Input */}
+                                <Box mb={6}>
+                                    <HStack gap={2}>
+                                        <Input
+                                            placeholder="Promo Code"
+                                            value={promoInput}
+                                            onChange={(e) => setPromoInput(e.target.value)}
+                                            borderRadius="xl"
+                                            bg="gray.50"
+                                            border="none"
+                                        />
+                                        <Button
+                                            colorPalette="red"
+                                            variant="subtle"
+                                            borderRadius="xl"
+                                            onClick={handleApplyPromo}
+                                        >
+                                            Apply
+                                        </Button>
+                                    </HStack>
+                                    {promoError && <Text color="red.500" fontSize="xs" mt={1}>Invalid promo code</Text>}
+                                    {appliedPromoCode && (
+                                        <Flex mt={2} align="center" gap={2}>
+                                            <Badge colorPalette="green" variant="subtle" borderRadius="full" px={2}>
+                                                {appliedPromoCode} Applied
+                                            </Badge>
+                                            <Text fontSize="xs" color="green.600">-{discount}% off</Text>
+                                        </Flex>
+                                    )}
+                                </Box>
+
+                                <Flex justify="space-between" mb={3}>
+                                    <Text color="gray.500">Subtotal</Text>
+                                    <Text fontWeight="bold" color="gray.800">₦{subtotal.toLocaleString()}</Text>
+                                </Flex>
+                                {discount > 0 && (
+                                    <Flex justify="space-between" mb={3}>
+                                        <Text color="green.600">Discount ({appliedPromoCode})</Text>
+                                        <Text fontWeight="bold" color="green.600">-₦{discountAmount.toLocaleString()}</Text>
+                                    </Flex>
+                                )}
+                                <Flex justify="space-between" mb={5}>
+                                    <Text color="gray.500">Delivery</Text>
+                                    <Text fontWeight="bold" color="gray.800">₦{deliveryFee.toLocaleString()}</Text>
+                                </Flex>
+                                <Separator mb={6} borderColor="gray.100" />
+                                <Flex justify="space-between" mb={8}>
+                                    <Text fontWeight="bold" fontSize="xl" color="gray.800">Total</Text>
+                                    <Text fontWeight="bold" fontSize="2xl" color="gray.800">₦{total.toLocaleString()}</Text>
+                                </Flex>
+
+                                <Button
+                                    bg="black"
+                                    color="white"
+                                    w="full"
+                                    size="lg"
+                                    borderRadius="xl"
+                                    py={7}
+                                    fontSize="lg"
+                                    _hover={{ bg: "gray.800" }}
+                                    onClick={handleCheckout}
+                                >
+                                    Checkout
+                                </Button>
+                            </Box>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                {/* Checkout Modal */}
+                <CheckoutModal
+                    isOpen={open}
+                    onClose={onClose}
+                    onConfirm={proceedToOrder}
+                    isLoading={isSubmitting}
+                />
+            </Box>
+        </motion.div>
     )
 }

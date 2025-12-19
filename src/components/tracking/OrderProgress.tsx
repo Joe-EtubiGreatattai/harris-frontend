@@ -29,12 +29,12 @@ export const OrderProgress = ({ status }: OrderProgressProps) => {
                     left="40px"
                     right="40px"
                     h="2px"
-                    bg="white/20"
+                    bg="red.100"
                     zIndex={0}
                 >
                     <Box
                         h="full"
-                        bg="white"
+                        bg="red.500"
                         transition="width 0.5s ease"
                         w={`${(currentIndex / (steps.length - 1)) * 100}%`}
                     />
@@ -49,12 +49,12 @@ export const OrderProgress = ({ status }: OrderProgressProps) => {
                         <VStack key={step.label} zIndex={1} gap={2} flex={1}>
                             <Circle
                                 size="40px"
-                                bg={isCompleted ? "white" : "white/20"}
-                                color={isCompleted ? "red.500" : "white"}
+                                bg={isCompleted ? "red.500" : "red.50"}
+                                color={isCompleted ? "white" : "red.200"}
                                 border="2px solid"
-                                borderColor={isActive ? "white" : "transparent"}
+                                borderColor={isActive ? "red.600" : "transparent"}
                                 transition="all 0.3s"
-                                boxShadow={isActive ? "0 0 15px rgba(255,255,255,0.5)" : "none"}
+                                boxShadow={isActive ? "0 0 15px rgba(229, 62, 62, 0.3)" : "none"}
                             >
                                 <Center>
                                     <Icon size={20} />
@@ -63,7 +63,7 @@ export const OrderProgress = ({ status }: OrderProgressProps) => {
                             <Text
                                 fontSize="10px"
                                 fontWeight={isActive ? "bold" : "medium"}
-                                color="white"
+                                color="gray.600"
                                 opacity={isCompleted ? 1 : 0.5}
                                 textAlign="center"
                             >
