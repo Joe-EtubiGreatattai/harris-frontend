@@ -17,10 +17,12 @@ const urlBase64ToUint8Array = (base64String: string) => {
 
 export const pushNotificationService = {
     checkPermission: () => {
+        if (!('Notification' in window)) return 'denied';
         return Notification.permission;
     },
 
     requestPermission: async () => {
+        if (!('Notification' in window)) return 'denied';
         const permission = await Notification.requestPermission();
         return permission;
     },
