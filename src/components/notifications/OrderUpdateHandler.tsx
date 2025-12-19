@@ -30,12 +30,21 @@ export const OrderUpdateHandler = () => {
         initPush();
 
         const handleOrderUpdate = (updatedOrder: any) => {
+            console.log('Socket event received:', updatedOrder);
+            console.log('Current user:', user?.email);
+
             // Only show toast if it's the current user's order
-            if (updatedOrder.user.email === user.email) {
+            if (updatedOrder.user?.email && user?.email && updatedOrder.user.email.toLowerCase() === user.email.toLowerCase()) {
+                console.log('Triggering toast for order update');
                 toaster.create({
                     title: 'Order Status Update',
                     description: `Your order #${updatedOrder.orderId.slice(-6)} is now ${updatedOrder.status}`,
                     type: 'info'
+                });
+            } else {
+                console.log('Email mismatch or missing data', {
+                    orderEmail: updatedOrder.user?.email,
+                    userEmail: user?.email
                 });
             }
         };
