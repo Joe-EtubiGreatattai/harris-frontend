@@ -72,11 +72,16 @@ const listItem = {
     show: { opacity: 1, y: 0 }
 }
 
+import { RatingModal } from "../components/tracking/RatingModal"
+
+// ... existing code ...
+
 export const TrackingPage = () => {
     const navigate = useNavigate()
     const { activeOrders, completeOrder, isLoadingOrders } = useUser()
     const [showConfirm, setShowConfirm] = useState<Order | null>(null)
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
+    const [ratingOrder, setRatingOrder] = useState<string | null>(null)
 
     const isBusy = activeOrders.length > 5
 
@@ -98,16 +103,23 @@ export const TrackingPage = () => {
         )
     }
 
-    const handleCompleteOrder = (orderId: string) => {
-        completeOrder(orderId)
-        setShowConfirm(null)
-        // Trigger Confetti
+    const handleCompleteOrder = async (orderId: string) => {
+        // First hide the confirmation modal
+        setShowConfirm(null);
+
+        // Then complete the order
+        await completeOrder(orderId);
+
+        // Trigger Confetti for completion
         confetti({
             particleCount: 150,
             spread: 70,
             origin: { y: 0.6 },
             colors: ['#E53E3E', '#F6E05E', '#FFFFFF']
         });
+
+        // Finally show the rating modal
+        setRatingOrder(orderId);
     }
 
     return (
@@ -438,6 +450,15 @@ export const TrackingPage = () => {
                         </Box>
                     )}
                 </AnimatePresence>
+
+                {/* Rating Modal */}
+                {ratingOrder && (
+                    <RatingModal
+                        isOpen={!!ratingOrder}
+                        onClose={() => setRatingOrder(null)}
+                        orderId={ratingOrder}
+                    />
+                )}
             </Box>
         </motion.div>
     )

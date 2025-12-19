@@ -187,5 +187,16 @@ export const api = {
         });
         if (!response.ok) throw new Error("Subscription failed");
         return response.json();
+    },
+
+    // Ratings
+    submitRating: async (ratingData: { orderId: string, rating: number, comment?: string }) => {
+        const response = await fetch(`${API_URL}/ratings`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(ratingData)
+        });
+        if (!response.ok) throw new Error("Failed to submit rating");
+        return response.json();
     }
 };
