@@ -7,7 +7,7 @@ import { useCart } from "../context/CartContext"
 
 export const ProfilePage = () => {
     const navigate = useNavigate()
-    const { user, orderHistory, updateSavedAddress } = useUser()
+    const { user, orderHistory, updateSavedAddress, updateUser } = useUser()
     const { addItemsToCart, clearCart } = useCart()
 
     const handleReorder = (items: any[]) => {
@@ -52,6 +52,19 @@ export const ProfilePage = () => {
                 <Text color="gray.400" fontSize="xs" mt={1} textAlign="center" maxW="200px">
                     {user?.address || "No address set"}
                 </Text>
+
+                <Input
+                    placeholder="Add Phone Number"
+                    value={user?.phone || ""}
+                    onChange={(e) => user && updateUser({ ...user, phone: e.target.value })}
+                    variant="subtle"
+                    size="sm"
+                    textAlign="center"
+                    mt={3}
+                    maxW="200px"
+                    bg="gray.50"
+                    borderRadius="full"
+                />
             </Flex>
 
             {/* Notifications */}

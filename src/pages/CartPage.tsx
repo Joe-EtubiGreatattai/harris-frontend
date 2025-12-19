@@ -75,7 +75,8 @@ export const CartPage = () => {
                 orderId: Math.random().toString(36).substr(2, 9),
                 user: {
                     email: user.email,
-                    address: user.address
+                    address: user.address,
+                    phone: user.phone
                 },
                 items: items.map(item => ({
                     productId: item.id,

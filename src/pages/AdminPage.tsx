@@ -300,7 +300,7 @@ export const AdminPage = () => {
 
                                 <Flex mt={3} justify="space-between" align={{ base: "stretch", md: "center" }} direction={{ base: "column", md: "row" }} gap={4}>
                                     <VStack align="start" gap={2}>
-                                        <Text fontSize="xs" fontWeight="bold" color="gray.600">User: {order.user.email} | {order.user.address}</Text>
+                                        <Text fontSize="xs" fontWeight="bold" color="gray.600">User: {order.user.email} | {order.user.phone || "No Phone"} | {order.user.address}</Text>
                                         <HStack w="full">
                                             <Text fontSize="sm" minW="45px">Rider:</Text>
                                             <Box border="1px solid" borderColor="gray.200" borderRadius="md" px={2} h="36px" display="flex" alignItems="center" flex={1} maxW={{ md: "200px" }}>

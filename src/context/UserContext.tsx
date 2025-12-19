@@ -7,6 +7,7 @@ import type { CartItem } from "./CartContext";
 export interface UserProfile {
     email: string;
     address: string;
+    phone?: string;
     favorites?: string[];
     savedAddresses?: {
         home?: string;
