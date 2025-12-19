@@ -1,4 +1,4 @@
-import { Box, Flex, Text, Button, Input, VStack, Image, Spinner, Center } from "@chakra-ui/react";
+import { Box, Flex, Text, Button, Input, VStack, Image, Spinner, Center, IconButton } from "@chakra-ui/react";
 import { useState, useRef } from "react";
 import { IoClose, IoCloudUploadOutline } from "react-icons/io5";
 import { api } from "../../services/api";
@@ -70,91 +70,93 @@ export const RiderModal = ({ isOpen, onClose, onSave }: RiderModalProps) => {
             <Box
                 bg="white"
                 w="full"
-                maxW="md"
+                maxW={{ base: "95%", md: "md" }}
                 borderRadius="2xl"
                 boxShadow="2xl"
                 onClick={(e) => e.stopPropagation()}
                 overflow="hidden"
             >
-                <Flex justify="space-between" align="center" p={6} borderBottom="1px solid" borderColor="gray.100">
-                    <Text fontWeight="bold" fontSize="xl">Add New Rider</Text>
-                    <Button
+                <Flex justify="space-between" align="center" p={{ base: 4, md: 6 }} borderBottom="1px solid" borderColor="gray.100">
+                    <Text fontWeight="bold" fontSize={{ base: "lg", md: "xl" }}>Add New Rider</Text>
+                    <IconButton
                         variant="ghost"
                         onClick={onClose}
                         borderRadius="full"
                         size="sm"
-                        p={0}
+                        aria-label="Close"
                     >
                         <IoClose size={24} />
-                    </Button>
+                    </IconButton>
                 </Flex>
 
-                <Box p={6}>
+                <Box p={{ base: 4, md: 6 }}>
                     <VStack gap={4} align="stretch">
                         <Box>
-                            <Text fontWeight="bold" mb={2} fontSize="sm">Name</Text>
-                            <Input name="name" value={formData.name} onChange={handleChange} placeholder="Rider Name" />
+                            <Text fontWeight="bold" mb={2} fontSize="xs">Name</Text>
+                            <Input name="name" value={formData.name} onChange={handleChange} placeholder="Rider Name" size="sm" borderRadius="lg" />
                         </Box>
                         <Box>
-                            <Text fontWeight="bold" mb={2} fontSize="sm">Email</Text>
-                            <Input name="email" value={formData.email} onChange={handleChange} placeholder="Email Address" type="email" />
+                            <Text fontWeight="bold" mb={2} fontSize="xs">Email</Text>
+                            <Input name="email" value={formData.email} onChange={handleChange} placeholder="Email Address" type="email" size="sm" borderRadius="lg" />
                         </Box>
                         <Box>
-                            <Text fontWeight="bold" mb={2} fontSize="sm">Phone</Text>
-                            <Input name="phone" value={formData.phone} onChange={handleChange} placeholder="Phone Number" />
+                            <Text fontWeight="bold" mb={2} fontSize="xs">Phone</Text>
+                            <Input name="phone" value={formData.phone} onChange={handleChange} placeholder="Phone Number" size="sm" borderRadius="lg" />
                         </Box>
 
-                        <Flex gap={4} direction={{ base: "column", md: "row" }} align="start">
-                            <Box flex={1} w="full">
-                                <Text fontWeight="bold" fontSize="sm" mb={2}>Rider Image</Text>
-                                <Box
-                                    h="120px"
-                                    bg="gray.50"
-                                    borderRadius="xl"
-                                    overflow="hidden"
-                                    position="relative"
-                                    border="2px dashed"
-                                    borderColor={formData.image ? "transparent" : "gray.200"}
-                                >
-                                    {formData.image ? (
-                                        <Image src={formData.image} w="full" h="full" objectFit="cover" />
-                                    ) : (
-                                        <Center h="full">
-                                            {isUploading ? <Spinner color="red.500" /> : <IoCloudUploadOutline size={30} color="gray" />}
-                                        </Center>
-                                    )}
-                                    <Input
-                                        type="file"
-                                        hidden
-                                        ref={fileInputRef}
-                                        accept="image/*"
-                                        onChange={handleFileUpload}
-                                    />
-                                    <Button
-                                        size="xs"
-                                        position="absolute"
-                                        bottom={2}
-                                        right={2}
-                                        onClick={() => fileInputRef.current?.click()}
-                                        bg="blackAlpha.600"
-                                        color="white"
-                                        _hover={{ bg: "blackAlpha.700" }}
+                        <Box>
+                            <Text fontWeight="bold" fontSize="xs" mb={2}>Rider Image</Text>
+                            <Flex gap={4} direction={{ base: "column", sm: "row" }} align="start">
+                                <Box w={{ base: "full", sm: "120px" }}>
+                                    <Box
+                                        h="120px"
+                                        bg="gray.50"
+                                        borderRadius="xl"
+                                        overflow="hidden"
+                                        position="relative"
+                                        border="2px dashed"
+                                        borderColor={formData.image ? "transparent" : "gray.200"}
                                     >
-                                        {formData.image ? "Change" : "Upload"}
-                                    </Button>
+                                        {formData.image ? (
+                                            <Image src={formData.image} w="full" h="full" objectFit="cover" />
+                                        ) : (
+                                            <Center h="full">
+                                                {isUploading ? <Spinner color="red.500" /> : <IoCloudUploadOutline size={30} color="gray" />}
+                                            </Center>
+                                        )}
+                                        <Input
+                                            type="file"
+                                            hidden
+                                            ref={fileInputRef}
+                                            accept="image/*"
+                                            onChange={handleFileUpload}
+                                        />
+                                        <Button
+                                            size="xs"
+                                            position="absolute"
+                                            bottom={2}
+                                            right={2}
+                                            onClick={() => fileInputRef.current?.click()}
+                                            bg="blackAlpha.700"
+                                            color="white"
+                                            _hover={{ bg: "blackAlpha.800" }}
+                                        >
+                                            {formData.image ? "Change" : "Upload"}
+                                        </Button>
+                                    </Box>
                                 </Box>
-                            </Box>
-                            <Box flex={1} w="full">
-                                <Text fontWeight="bold" mb={2} fontSize="sm">Or paste Image URL</Text>
-                                <Input name="image" value={formData.image} onChange={handleChange} placeholder="https://..." size="sm" />
-                            </Box>
-                        </Flex>
+                                <Box flex={1} w="full">
+                                    <Text fontWeight="bold" mb={2} fontSize="2xs" color="gray.500">Or paste Image URL</Text>
+                                    <Input name="image" value={formData.image} onChange={handleChange} placeholder="https://..." size="sm" borderRadius="lg" />
+                                </Box>
+                            </Flex>
+                        </Box>
                     </VStack>
                 </Box>
 
-                <Flex p={6} borderTop="1px solid" borderColor="gray.100" justify="flex-end" gap={3}>
-                    <Button variant="ghost" onClick={onClose} disabled={isLoading || isUploading}>Cancel</Button>
-                    <Button bg="red.500" color="white" _hover={{ bg: "red.600" }} onClick={handleSubmit} loading={isLoading} disabled={isUploading}>Add Rider</Button>
+                <Flex p={{ base: 4, md: 6 }} borderTop="1px solid" borderColor="gray.100" justify="flex-end" gap={3}>
+                    <Button variant="ghost" onClick={onClose} disabled={isLoading || isUploading} size={{ base: "sm", md: "md" }}>Cancel</Button>
+                    <Button bg="red.500" color="white" _hover={{ bg: "red.600" }} onClick={handleSubmit} loading={isLoading} disabled={isUploading} size={{ base: "sm", md: "md" }}>Add Rider</Button>
                 </Flex>
             </Box>
         </Box>

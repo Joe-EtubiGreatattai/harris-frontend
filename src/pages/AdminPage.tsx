@@ -1,4 +1,4 @@
-import { Box, Flex, Text, Button, VStack, HStack, Badge, Spinner, Image } from "@chakra-ui/react";
+import { Box, Flex, Text, Button, VStack, HStack, Badge, Spinner, Image, IconButton } from "@chakra-ui/react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../services/api";
@@ -195,54 +195,68 @@ export const AdminPage = () => {
     }
 
     return (
-        <Box minH="100vh" bg="gray.50" p={8}>
-            <Flex justify="space-between" align="center" mb={8}>
-                <Text fontSize="3xl" fontWeight="bold">Admin Dashboard</Text>
-                <HStack>
-                    <Button onClick={fetchData} variant="outline" gap={2}>
+        <Box minH="100vh" bg="gray.50" p={{ base: 4, md: 8 }}>
+            <Flex justify="space-between" align={{ base: "start", md: "center" }} mb={8} direction={{ base: "column", md: "row" }} gap={4}>
+                <Text fontSize={{ base: "2xl", md: "3xl" }} fontWeight="bold">Admin Dashboard</Text>
+                <HStack w={{ base: "full", md: "auto" }} justify={{ base: "space-between", md: "flex-end" }}>
+                    <Button onClick={fetchData} variant="outline" gap={2} size={{ base: "sm", md: "md" }}>
                         <IoRefresh /> Refresh
                     </Button>
-                    <Button onClick={handleLogout} colorScheme="red" variant="ghost">
+                    <Button onClick={handleLogout} colorScheme="red" variant="ghost" size={{ base: "sm", md: "md" }}>
                         Logout
                     </Button>
                 </HStack>
             </Flex>
 
             {/* Custom Tab Switcher */}
-            <Flex mb={6} bg="white" p={1} borderRadius="xl" width="fit-content" shadow="sm">
-                <Button
-                    variant={activeTab === 'orders' ? 'solid' : 'ghost'}
-                    colorScheme={activeTab === 'orders' ? 'red' : 'gray'}
-                    onClick={() => setActiveTab('orders')}
-                    borderRadius="lg"
-                >
-                    Orders ({orders.length})
-                </Button>
-                <Button
-                    variant={activeTab === 'products' ? 'solid' : 'ghost'}
-                    colorScheme={activeTab === 'products' ? 'red' : 'gray'}
-                    onClick={() => setActiveTab('products')}
-                    borderRadius="lg"
-                >
-                    Products ({products.length})
-                </Button>
-                <Button
-                    variant={activeTab === 'riders' ? 'solid' : 'ghost'}
-                    colorScheme={activeTab === 'riders' ? 'red' : 'gray'}
-                    onClick={() => setActiveTab('riders')}
-                    borderRadius="lg"
-                >
-                    Riders ({riders.length})
-                </Button>
-                <Button
-                    variant={activeTab === 'settings' ? 'solid' : 'ghost'}
-                    colorScheme={activeTab === 'settings' ? 'red' : 'gray'}
-                    onClick={() => setActiveTab('settings')}
-                    borderRadius="lg"
-                >
-                    Settings
-                </Button>
-            </Flex>
+            <Box overflowX="auto" pb={2} mb={6} css={{
+                '&::-webkit-scrollbar': { display: 'none' },
+                '-ms-overflow-style': 'none',
+                'scrollbar-width': 'none'
+            }}>
+                <Flex bg="white" p={1} borderRadius="xl" width="fit-content" shadow="sm" gap={1}>
+                    <Button
+                        variant={activeTab === 'orders' ? 'solid' : 'ghost'}
+                        colorScheme={activeTab === 'orders' ? 'red' : 'gray'}
+                        onClick={() => setActiveTab('orders')}
+                        borderRadius="lg"
+                        size={{ base: "sm", md: "md" }}
+                        whiteSpace="nowrap"
+                    >
+                        Orders ({orders.length})
+                    </Button>
+                    <Button
+                        variant={activeTab === 'products' ? 'solid' : 'ghost'}
+                        colorScheme={activeTab === 'products' ? 'red' : 'gray'}
+                        onClick={() => setActiveTab('products')}
+                        borderRadius="lg"
+                        size={{ base: "sm", md: "md" }}
+                        whiteSpace="nowrap"
+                    >
+                        Products ({products.length})
+                    </Button>
+                    <Button
+                        variant={activeTab === 'riders' ? 'solid' : 'ghost'}
+                        colorScheme={activeTab === 'riders' ? 'red' : 'gray'}
+                        onClick={() => setActiveTab('riders')}
+                        borderRadius="lg"
+                        size={{ base: "sm", md: "md" }}
+                        whiteSpace="nowrap"
+                    >
+                        Riders ({riders.length})
+                    </Button>
+                    <Button
+                        variant={activeTab === 'settings' ? 'solid' : 'ghost'}
+                        colorScheme={activeTab === 'settings' ? 'red' : 'gray'}
+                        onClick={() => setActiveTab('settings')}
+                        borderRadius="lg"
+                        size={{ base: "sm", md: "md" }}
+                        whiteSpace="nowrap"
+                    >
+                        Settings
+                    </Button>
+                </Flex>
+            </Box>
 
             {/* Content Area */}
             <Box>
@@ -261,26 +275,26 @@ export const AdminPage = () => {
                                     <Text fontWeight="bold" fontSize="xl" color="red.500">₦{order.total.toLocaleString()}</Text>
                                 </Flex>
 
-                                <VStack align="start" pl={4} borderLeft="2px solid" borderColor="gray.100" my={3}>
+                                <VStack align="start" pl={3} borderLeft="2px solid" borderColor="gray.100" my={3} gap={1}>
                                     {order.items.map((item: any, idx: number) => (
-                                        <Text key={idx} fontSize="sm">
+                                        <Text key={idx} fontSize="xs">
                                             {item.quantity}x {item.name} ({item.size}) {item.extras?.length > 0 && `+ ${item.extras.join(', ')}`}
                                         </Text>
                                     ))}
                                 </VStack>
 
-                                <Flex mt={3} justify="space-between" align="center" wrap="wrap" gap={3}>
-                                    <VStack align="start" gap={1}>
-                                        <Text fontSize="sm" fontWeight="bold">User: {order.user.email} | {order.user.address}</Text>
-                                        <HStack>
-                                            <Text fontSize="sm">Rider:</Text>
-                                            <Box border="1px solid" borderColor="gray.200" borderRadius="md" px={2} h="32px" display="flex" alignItems="center">
+                                <Flex mt={3} justify="space-between" align={{ base: "stretch", md: "center" }} direction={{ base: "column", md: "row" }} gap={4}>
+                                    <VStack align="start" gap={2}>
+                                        <Text fontSize="xs" fontWeight="bold" color="gray.600">User: {order.user.email} | {order.user.address}</Text>
+                                        <HStack w="full">
+                                            <Text fontSize="sm" minW="45px">Rider:</Text>
+                                            <Box border="1px solid" borderColor="gray.200" borderRadius="md" px={2} h="36px" display="flex" alignItems="center" flex={1} maxW={{ md: "200px" }}>
                                                 <select
                                                     style={{
                                                         fontSize: "14px",
                                                         background: "transparent",
                                                         outline: "none",
-                                                        width: "180px",
+                                                        width: "100%",
                                                         cursor: (order.status !== 'Ready for Delivery' && order.status !== 'Out for Delivery') ? 'not-allowed' : 'pointer'
                                                     }}
                                                     value={order.assignedRider?._id || order.assignedRider || ""}
@@ -295,19 +309,19 @@ export const AdminPage = () => {
                                             </Box>
                                         </HStack>
                                     </VStack>
-                                    <HStack>
+                                    <HStack justify={{ base: "flex-end", md: "flex-end" }} w={{ base: "full", md: "auto" }}>
                                         {/* Status Controls */}
                                         {order.status !== 'Delivered' && (
                                             <>
                                                 {/* Only Users can mark Delivered now. Admin can move to other states like 'Preparing', 'Out for Delivery' */}
                                                 {order.status === 'Pending' && (
-                                                    <Button size="sm" colorScheme="orange" onClick={() => handleUpdateStatus(order.orderId, "Preparing")}>
-                                                        Prepare
+                                                    <Button size="sm" colorScheme="orange" onClick={() => handleUpdateStatus(order.orderId, "Preparing")} w={{ base: "full", md: "auto" }}>
+                                                        Preparing
                                                     </Button>
                                                 )}
                                                 {order.status === 'Preparing' && (
-                                                    <Button size="sm" colorScheme="blue" onClick={() => handleUpdateStatus(order.orderId, "Ready for Delivery")}>
-                                                        Mark Ready
+                                                    <Button size="sm" colorScheme="blue" onClick={() => handleUpdateStatus(order.orderId, "Ready for Delivery")} w={{ base: "full", md: "auto" }}>
+                                                        Mark as Ready
                                                     </Button>
                                                 )}
                                                 {order.status === 'Ready for Delivery' && (
@@ -316,12 +330,13 @@ export const AdminPage = () => {
                                                         colorScheme="red"
                                                         onClick={() => handleUpdateStatus(order.orderId, "Out for Delivery")}
                                                         disabled={!order.assignedRider}
+                                                        w={{ base: "full", md: "auto" }}
                                                     >
                                                         Dispatch
                                                     </Button>
                                                 )}
                                                 {order.status === 'Out for Delivery' && (
-                                                    <Button size="sm" variant="outline" colorScheme="green" onClick={() => handleUpdateStatus(order.orderId, "Delivered")}>
+                                                    <Button size="sm" variant="outline" colorScheme="green" onClick={() => handleUpdateStatus(order.orderId, "Delivered")} w={{ base: "full", md: "auto" }}>
                                                         Mark Delivered
                                                     </Button>
                                                 )}
@@ -343,9 +358,9 @@ export const AdminPage = () => {
 
                         <Flex wrap="wrap" gap={4}>
                             {products.map((product) => (
-                                <Box key={product._id} w="250px" bg="white" border="1px solid" borderColor="gray.100" borderRadius="xl" overflow="hidden" shadow="sm">
+                                <Box key={product._id} w={{ base: "full", sm: "calc(50% - 8px)", lg: "250px" }} bg="white" border="1px solid" borderColor="gray.100" borderRadius="xl" overflow="hidden" shadow="sm">
                                     <Box position="relative">
-                                        <Image src={product.image} h="150px" w="full" objectFit="cover" opacity={product.isAvailable ? 1 : 0.5} />
+                                        <Image src={product.image} h={{ base: "180px", md: "150px" }} w="full" objectFit="cover" opacity={product.isAvailable ? 1 : 0.5} />
                                         {!product.isAvailable && (
                                             <Badge
                                                 position="absolute"
@@ -406,32 +421,41 @@ export const AdminPage = () => {
                         <VStack gap={4} align="stretch">
                             {riders.map((rider) => (
                                 <Box key={rider._id} p={4} bg="white" border="1px solid" borderColor="gray.100" borderRadius="xl" shadow="sm">
-                                    <Flex justify="space-between" align="center">
+                                    <Flex justify="space-between" align={{ base: "start", md: "center" }} direction={{ base: "column", md: "row" }} gap={4}>
                                         <HStack gap={4}>
                                             <Box p={3} bg="gray.50" borderRadius="full">
                                                 <IoPerson size={24} />
                                             </Box>
                                             <Box>
                                                 <Text fontWeight="bold" fontSize="lg">{rider.name}</Text>
-                                                <Text fontSize="sm" color="gray.500">{rider.email} • {rider.phone}</Text>
+                                                <Text fontSize="xs" color="gray.500">{rider.email}</Text>
+                                                <Text fontSize="xs" color="gray.500">{rider.phone}</Text>
                                             </Box>
                                         </HStack>
-                                        <HStack gap={4}>
+                                        <Flex gap={3} w={{ base: "full", md: "auto" }} justify={{ base: "space-between", md: "flex-end" }} align="center">
                                             <Badge colorScheme={rider.status === 'Available' ? 'green' : rider.status === 'Busy' ? 'orange' : rider.status === 'Suspended' ? 'red' : 'gray'}>
                                                 {rider.status}
                                             </Badge>
-                                            <Button
-                                                size="sm"
-                                                variant="outline"
-                                                colorScheme={rider.status === 'Suspended' ? 'green' : 'orange'}
-                                                onClick={() => handleToggleSuspension(rider._id, rider.status)}
-                                            >
-                                                {rider.status === 'Suspended' ? 'Unsuspend' : 'Suspend'}
-                                            </Button>
-                                            <Button size="sm" colorScheme="red" variant="ghost" onClick={() => handleDeleteRider(rider._id)}>
-                                                <IoTrash />
-                                            </Button>
-                                        </HStack>
+                                            <HStack gap={2}>
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    colorScheme={rider.status === 'Suspended' ? 'green' : 'orange'}
+                                                    onClick={() => handleToggleSuspension(rider._id, rider.status)}
+                                                >
+                                                    {rider.status === 'Suspended' ? 'Unsuspend' : 'Suspend'}
+                                                </Button>
+                                                <IconButton
+                                                    aria-label="Delete rider"
+                                                    size="sm"
+                                                    colorScheme="red"
+                                                    variant="ghost"
+                                                    onClick={() => handleDeleteRider(rider._id)}
+                                                >
+                                                    <IoTrash />
+                                                </IconButton>
+                                            </HStack>
+                                        </Flex>
                                     </Flex>
                                 </Box>
                             ))}

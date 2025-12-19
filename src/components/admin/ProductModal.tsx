@@ -136,28 +136,32 @@ export const ProductModal = ({ isOpen, onClose, product, onSave }: ProductModalP
             <Box
                 bg="white"
                 w="full"
-                maxW="2xl"
+                maxW={{ base: "98%", md: "2xl" }}
                 borderRadius="2xl"
                 boxShadow="2xl"
                 onClick={(e) => e.stopPropagation()}
                 overflow="hidden"
+                maxH="95vh"
+                display="flex"
+                flexDirection="column"
             >
-                <Flex justify="space-between" align="center" p={6} borderBottom="1px solid" borderColor="gray.100">
+                <Flex justify="space-between" align="center" p={{ base: 4, md: 6 }} borderBottom="1px solid" borderColor="gray.100" shrink={0}>
                     <VStack align="start" gap={0}>
-                        <Text fontWeight="bold" fontSize="xl">{product ? "Edit Product" : "Add New Product"}</Text>
-                        <Text fontSize="xs" color="gray.500">ID: {formData.id}</Text>
+                        <Text fontWeight="bold" fontSize={{ base: "lg", md: "xl" }}>{product ? "Edit Product" : "Add New Product"}</Text>
+                        <Text fontSize="2xs" color="gray.500">ID: {formData.id}</Text>
                     </VStack>
                     <IconButton
                         aria-label="Close"
                         variant="ghost"
                         onClick={onClose}
                         borderRadius="full"
+                        size="sm"
                     >
                         <IoClose size={24} />
                     </IconButton>
                 </Flex>
 
-                <Box p={6} maxH="75vh" overflowY="auto">
+                <Box p={{ base: 4, md: 6 }} overflowY="auto" flex={1}>
                     <VStack gap={6} align="stretch">
                         <Flex gap={6} direction={{ base: "column", md: "row" }}>
                             <VStack align="stretch" flex={1} gap={4}>
@@ -208,10 +212,10 @@ export const ProductModal = ({ isOpen, onClose, product, onSave }: ProductModalP
                                 </Flex>
                             </VStack>
 
-                            <VStack align="stretch" w={{ base: "full", md: "250px" }} gap={4}>
+                            <VStack align="stretch" w={{ base: "full", md: "250px" }} gap={2}>
                                 <Text fontWeight="bold" fontSize="sm">Product Image</Text>
                                 <Box
-                                    h="150px"
+                                    h={{ base: "140px", md: "150px" }}
                                     bg="gray.100"
                                     borderRadius="xl"
                                     overflow="hidden"
@@ -239,7 +243,7 @@ export const ProductModal = ({ isOpen, onClose, product, onSave }: ProductModalP
                                         bottom={2}
                                         right={2}
                                         onClick={() => fileInputRef.current?.click()}
-                                        bg="blackAlpha.600"
+                                        bg="blackAlpha.700"
                                         color="white"
                                     >
                                         {formData.image ? "Change" : "Upload"}
@@ -251,6 +255,7 @@ export const ProductModal = ({ isOpen, onClose, product, onSave }: ProductModalP
                                     value={formData.image}
                                     onChange={handleChange}
                                     placeholder="Or paste Image URL"
+                                    fontSize="xs"
                                 />
                             </VStack>
                         </Flex>
@@ -264,41 +269,46 @@ export const ProductModal = ({ isOpen, onClose, product, onSave }: ProductModalP
                             </Flex>
                             <VStack gap={2} align="stretch">
                                 {formData.extras.map((extra, index) => (
-                                    <HStack key={index} gap={2} bg="gray.50" p={2} borderRadius="lg">
+                                    <Flex key={index} gap={2} bg="gray.50" p={2} borderRadius="lg" align="center" direction={{ base: "column", sm: "row" }}>
                                         <Input
                                             size="sm"
                                             value={extra.name}
                                             placeholder="Extra Name"
                                             onChange={(e) => handleExtraChange(index, 'name', e.target.value)}
                                             bg="white"
+                                            flex={1}
                                         />
-                                        <Input
-                                            size="sm"
-                                            type="number"
-                                            w="80px"
-                                            value={extra.price}
-                                            onChange={(e) => handleExtraChange(index, 'price', parseFloat(e.target.value))}
-                                            bg="white"
-                                        />
-                                        <IconButton
-                                            aria-label="Toggle Availability"
-                                            size="sm"
-                                            variant="ghost"
-                                            colorScheme={extra.isAvailable ? "green" : "red"}
-                                            onClick={() => handleExtraChange(index, 'isAvailable', !extra.isAvailable)}
-                                        >
-                                            {extra.isAvailable ? <IoCheckmarkCircle /> : <IoRadioButtonOff />}
-                                        </IconButton>
-                                        <IconButton
-                                            aria-label="Delete"
-                                            size="sm"
-                                            variant="ghost"
-                                            colorScheme="red"
-                                            onClick={() => handleRemoveExtra(index)}
-                                        >
-                                            <IoTrash />
-                                        </IconButton>
-                                    </HStack>
+                                        <HStack w={{ base: "full", sm: "auto" }} justify="space-between">
+                                            <Input
+                                                size="sm"
+                                                type="number"
+                                                w="90px"
+                                                value={extra.price}
+                                                onChange={(e) => handleExtraChange(index, 'price', parseFloat(e.target.value))}
+                                                bg="white"
+                                            />
+                                            <HStack gap={1}>
+                                                <IconButton
+                                                    aria-label="Toggle Availability"
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    colorScheme={extra.isAvailable ? "green" : "red"}
+                                                    onClick={() => handleExtraChange(index, 'isAvailable', !extra.isAvailable)}
+                                                >
+                                                    {extra.isAvailable ? <IoCheckmarkCircle /> : <IoRadioButtonOff />}
+                                                </IconButton>
+                                                <IconButton
+                                                    aria-label="Delete"
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    colorScheme="red"
+                                                    onClick={() => handleRemoveExtra(index)}
+                                                >
+                                                    <IoTrash />
+                                                </IconButton>
+                                            </HStack>
+                                        </HStack>
+                                    </Flex>
                                 ))}
                                 {formData.extras.length === 0 && (
                                     <Text fontSize="xs" color="gray.500" textAlign="center" py={4}>No extras defined for this product.</Text>
@@ -313,8 +323,8 @@ export const ProductModal = ({ isOpen, onClose, product, onSave }: ProductModalP
                     </VStack>
                 </Box>
 
-                <Flex p={6} borderTop="1px solid" borderColor="gray.100" justify="flex-end" gap={3}>
-                    <Button variant="ghost" onClick={onClose} disabled={isLoading || isUploading}>Cancel</Button>
+                <Flex p={{ base: 4, md: 6 }} borderTop="1px solid" borderColor="gray.100" justify="flex-end" gap={3} shrink={0}>
+                    <Button variant="ghost" onClick={onClose} disabled={isLoading || isUploading} size={{ base: "sm", md: "md" }}>Cancel</Button>
                     <Button
                         bg="red.500"
                         color="white"
@@ -322,6 +332,8 @@ export const ProductModal = ({ isOpen, onClose, product, onSave }: ProductModalP
                         onClick={handleSubmit}
                         loading={isLoading}
                         disabled={isUploading}
+                        size={{ base: "sm", md: "md" }}
+                        px={{ base: 6, md: 8 }}
                     >
                         Save Product
                     </Button>
