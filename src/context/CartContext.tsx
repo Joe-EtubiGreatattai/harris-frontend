@@ -7,7 +7,7 @@ export interface CartItem {
     productId: string;
     name: string;
     image: string;
-    size: "S" | "M" | "L" | "XL";
+    size: string;
     price: number;
     extras: string[];
     note: string;
@@ -20,9 +20,12 @@ interface CartContextType {
     addToCart: (item: Omit<CartItem, 'id'>) => void;
     removeFromCart: (id: string) => void;
     updateQuantity: (id: string, delta: number) => void;
+    addItemsToCart: (newItems: Omit<CartItem, 'id'>[]) => void;
     getCartTotal: () => number;
     clearCart: () => void;
-    addItemsToCart: (newItems: Omit<CartItem, 'id'>[]) => void;
+    applyPromoCode: (code: string) => boolean;
+    discount: number;
+    appliedPromoCode: string | null;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -32,6 +35,9 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         const saved = localStorage.getItem('cart');
         return saved ? JSON.parse(saved) : [];
     });
+
+    const [discount, setDiscount] = useState(0);
+    const [appliedPromoCode, setAppliedPromoCode] = useState<string | null>(null);
 
     useEffect(() => {
         localStorage.setItem('cart', JSON.stringify(items));
@@ -113,11 +119,42 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
     const clearCart = () => {
         setItems([]);
+        setAppliedPromoCode(null);
+        setDiscount(0);
         socket.emit('cartCleared');
     };
 
+    const applyPromoCode = (code: string) => {
+        const upperCode = code.toUpperCase();
+        if (upperCode === 'PIZZA50') {
+            setDiscount(50);
+            setAppliedPromoCode(upperCode);
+            return true;
+        } else if (upperCode === 'WELCOME10') {
+            setDiscount(10);
+            setAppliedPromoCode(upperCode);
+            return true;
+        } else if (upperCode === 'FREEFEED') {
+            setDiscount(100);
+            setAppliedPromoCode(upperCode);
+            return true;
+        }
+        return false;
+    };
+
     return (
-        <CartContext.Provider value={{ items, addToCart, removeFromCart, updateQuantity, getCartTotal, clearCart, addItemsToCart }}>
+        <CartContext.Provider value={{
+            items,
+            addToCart,
+            removeFromCart,
+            updateQuantity,
+            getCartTotal,
+            clearCart,
+            addItemsToCart,
+            applyPromoCode,
+            discount,
+            appliedPromoCode
+        }}>
             {children}
         </CartContext.Provider>
     );

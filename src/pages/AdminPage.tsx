@@ -1,11 +1,11 @@
-import { Box, Flex, Text, Button, VStack, HStack, Badge, Spinner, Image, IconButton } from "@chakra-ui/react";
+import { Box, Flex, Text, Button, VStack, HStack, Badge, Image, IconButton, Skeleton } from "@chakra-ui/react";
 import { useState, useEffect } from "react";
+import { IoRefresh, IoAdd, IoPencil, IoTrash, IoPerson } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
 import { api } from "../services/api";
 import { ProductModal } from "../components/admin/ProductModal";
 import { RiderModal } from "../components/admin/RiderModal";
-import { IoAdd, IoPencil, IoTrash, IoRefresh, IoPerson } from "react-icons/io5";
-import { socket } from "../services/socket"; // Import socket
+import { socket } from "../services/socket";
 
 export const AdminPage = () => {
     const [orders, setOrders] = useState<any[]>([]);
@@ -188,9 +188,16 @@ export const AdminPage = () => {
 
     if (isLoading) {
         return (
-            <Flex justify="center" align="center" h="100vh">
-                <Spinner size="xl" color="red.500" />
-            </Flex>
+            <Box p={{ base: 4, md: 8 }} bg="gray.50" minH="100vh">
+                <Flex justify="space-between" align="center" mb={8}>
+                    <Skeleton height="40px" width="250px" borderRadius="lg" />
+                    <HStack gap={4}>
+                        <Skeleton height="40px" width="100px" borderRadius="lg" />
+                        <Skeleton height="40px" width="100px" borderRadius="lg" />
+                    </HStack>
+                </Flex>
+                <Skeleton height="400px" borderRadius="2xl" />
+            </Box>
         );
     }
 
@@ -375,9 +382,19 @@ export const AdminPage = () => {
                                     </Box>
                                     <Box p={4}>
                                         <HStack justify="space-between" mb={2}>
-                                            <Badge>{product.category}</Badge>
+                                            <HStack gap={2}>
+                                                <Badge>{product.category}</Badge>
+                                                <Badge colorScheme="blue" variant="outline" fontSize="9px">{product.salesCount || 0} sales</Badge>
+                                            </HStack>
                                             <Text fontWeight="bold" color="red.500">
-                                                ₦{typeof product.prices === 'object' ? (product.prices.M || product.prices.Standard || 0).toLocaleString() : product.price}
+                                                {typeof product.prices === 'object' && Object.keys(product.prices).length > 0 ? (
+                                                    <>
+                                                        {Object.keys(product.prices).length > 1 && <Text as="span" fontSize="2xs" color="gray.400" mr={1}>Starting at</Text>}
+                                                        ₦{Math.min(...Object.values(product.prices) as number[]).toLocaleString()}
+                                                    </>
+                                                ) : (
+                                                    `₦${product.price || 0}`
+                                                )}
                                             </Text>
                                         </HStack>
                                         <Text fontWeight="bold" mb={1} truncate>{product.name}</Text>
@@ -500,6 +517,6 @@ export const AdminPage = () => {
                 onClose={() => setIsRiderModalOpen(false)}
                 onSave={handleSaveRider}
             />
-        </Box>
+        </Box >
     );
 };

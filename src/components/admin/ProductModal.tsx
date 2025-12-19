@@ -17,8 +17,9 @@ export const ProductModal = ({ isOpen, onClose, product, onSave }: ProductModalP
         category: "Pizza",
         image: "",
         description: "",
-        price: "",
         isAvailable: true,
+        isManualBestSeller: false,
+        sizePrices: [] as { size: string, price: number }[],
         extras: [] as any[]
     });
     const [isLoading, setIsLoading] = useState(false);
@@ -27,14 +28,18 @@ export const ProductModal = ({ isOpen, onClose, product, onSave }: ProductModalP
 
     useEffect(() => {
         if (product) {
+            // Convert prices Map/Object to array for editing
+            const pricesArr = product.prices ? Object.entries(product.prices).map(([size, price]) => ({ size, price: price as number })) : [];
+
             setFormData({
                 id: product.id,
                 name: product.name,
                 category: product.category,
                 image: product.image,
                 description: product.description || "",
-                price: typeof product.prices === 'object' ? (product.prices.M || product.prices.Standard || "").toString() : product.price.toString(),
                 isAvailable: product.isAvailable !== false,
+                isManualBestSeller: product.isManualBestSeller || false,
+                sizePrices: pricesArr.length > 0 ? pricesArr : [{ size: "Standard", price: product.price || 0 }],
                 extras: product.extras || []
             });
         } else {
@@ -44,8 +49,9 @@ export const ProductModal = ({ isOpen, onClose, product, onSave }: ProductModalP
                 category: "Pizza",
                 image: "",
                 description: "",
-                price: "",
                 isAvailable: true,
+                isManualBestSeller: false,
+                sizePrices: [{ size: "M", price: 0 }],
                 extras: [
                     { name: "Cheese", price: 500, isAvailable: true },
                     { name: "Pepperoni", price: 500, isAvailable: true },
@@ -57,6 +63,26 @@ export const ProductModal = ({ isOpen, onClose, product, onSave }: ProductModalP
 
     const handleChange = (e: any) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
+
+    const handleAddSize = () => {
+        setFormData(prev => ({
+            ...prev,
+            sizePrices: [...prev.sizePrices, { size: "", price: 0 }]
+        }));
+    };
+
+    const handleSizeChange = (index: number, field: string, value: any) => {
+        const newSizes = [...formData.sizePrices];
+        newSizes[index] = { ...newSizes[index], [field]: value };
+        setFormData(prev => ({ ...prev, sizePrices: newSizes }));
+    };
+
+    const handleRemoveSize = (index: number) => {
+        setFormData(prev => ({
+            ...prev,
+            sizePrices: prev.sizePrices.filter((_, i) => i !== index)
+        }));
     };
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -97,18 +123,24 @@ export const ProductModal = ({ isOpen, onClose, product, onSave }: ProductModalP
     const handleSubmit = async () => {
         setIsLoading(true);
         try {
-            const priceVal = parseFloat(formData.price);
+            // Convert sizePrices array back to Map/Object for backend
+            const pricesObj: Record<string, number> = {};
+            formData.sizePrices.forEach(sp => {
+                if (sp.size) pricesObj[sp.size] = sp.price;
+            });
+
             const payload = {
-                ...formData,
-                price: priceVal,
-                prices: {
-                    S: priceVal * 0.8,
-                    M: priceVal,
-                    L: priceVal * 1.2,
-                    XL: priceVal * 1.4,
-                    Standard: priceVal
-                }
+                id: formData.id,
+                name: formData.name,
+                category: formData.category,
+                image: formData.image,
+                description: formData.description,
+                isAvailable: formData.isAvailable,
+                isManualBestSeller: formData.isManualBestSeller,
+                prices: pricesObj,
+                extras: formData.extras
             };
+
             await onSave(payload);
             onClose();
         } catch (error) {
@@ -189,9 +221,60 @@ export const ProductModal = ({ isOpen, onClose, product, onSave }: ProductModalP
                                 </Box>
 
                                 <Box>
-                                    <Text fontWeight="bold" mb={2} fontSize="sm">Price (Base/Medium)</Text>
-                                    <Input type="number" name="price" value={formData.price} onChange={handleChange} />
+                                    <Flex justify="space-between" align="center" mb={2}>
+                                        <Text fontWeight="bold" fontSize="sm">Sizes & Pricing</Text>
+                                        <Button size="xs" colorScheme="blue" variant="ghost" onClick={handleAddSize}>
+                                            <Flex gap={1} align="center"><IoAdd /> Add Size</Flex>
+                                        </Button>
+                                    </Flex>
+                                    <VStack gap={2} align="stretch">
+                                        {formData.sizePrices.map((sp, idx) => (
+                                            <Flex key={idx} gap={2} align="center">
+                                                <Input
+                                                    size="sm"
+                                                    placeholder="Size (S, M, L...)"
+                                                    value={sp.size}
+                                                    onChange={(e) => handleSizeChange(idx, 'size', e.target.value)}
+                                                />
+                                                <Input
+                                                    size="sm"
+                                                    type="number"
+                                                    placeholder="Price"
+                                                    value={sp.price}
+                                                    onChange={(e) => handleSizeChange(idx, 'price', parseFloat(e.target.value))}
+                                                />
+                                                <IconButton
+                                                    aria-label="Remove Size"
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    colorScheme="red"
+                                                    onClick={() => handleRemoveSize(idx)}
+                                                    disabled={formData.sizePrices.length <= 1}
+                                                >
+                                                    <IoTrash />
+                                                </IconButton>
+                                            </Flex>
+                                        ))}
+                                    </VStack>
                                 </Box>
+
+                                <Flex align="center" justify="space-between" bg="blue.50" p={3} borderRadius="lg">
+                                    <Box>
+                                        <Text fontWeight="bold" fontSize="sm" color="blue.700">Best Seller Status</Text>
+                                        <Text fontSize="xs" color="blue.600">Manually highlight this item?</Text>
+                                    </Box>
+                                    <Button
+                                        size="sm"
+                                        colorScheme={formData.isManualBestSeller ? "blue" : "gray"}
+                                        variant={formData.isManualBestSeller ? "solid" : "outline"}
+                                        onClick={() => setFormData({ ...formData, isManualBestSeller: !formData.isManualBestSeller })}
+                                    >
+                                        <Flex gap={2} align="center">
+                                            {formData.isManualBestSeller ? <IoCheckmarkCircle /> : <IoRadioButtonOff />}
+                                            {formData.isManualBestSeller ? "Pinned" : "Standard"}
+                                        </Flex>
+                                    </Button>
+                                </Flex>
 
                                 <Flex align="center" justify="space-between" bg="gray.50" p={3} borderRadius="lg">
                                     <Box>

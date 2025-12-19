@@ -5,18 +5,17 @@ import { useState, useEffect } from "react"
 import { useCart } from "../context/CartContext"
 import { api } from "../services/api"
 import { socket } from "../services/socket"
-import type { Product } from "../data/menu"
 
 export const ProductPage = () => {
     const { id } = useParams<{ id: string }>()
     const navigate = useNavigate()
     const { addToCart } = useCart()
 
-    const [product, setProduct] = useState<Product | null>(null)
+    const [product, setProduct] = useState<any>(null)
     const [loading, setLoading] = useState(true)
 
     // State for selections
-    const [selectedSize, setSelectedSize] = useState<"S" | "M" | "L" | "XL">("S")
+    const [selectedSize, setSelectedSize] = useState<string>("")
     const [quantity, setQuantity] = useState(1)
     const [selectedExtras, setSelectedExtras] = useState<string[]>([])
     const [note, setNote] = useState("")
@@ -27,6 +26,10 @@ export const ProductPage = () => {
             try {
                 const data = await api.getProductById(id)
                 setProduct(data)
+                // Default to first size available
+                if (data.prices) {
+                    setSelectedSize(Object.keys(data.prices)[0])
+                }
             } catch (err) {
                 console.error("Failed to fetch product", err)
             } finally {
@@ -49,8 +52,8 @@ export const ProductPage = () => {
     }, [id])
 
     const calculateTotal = () => {
-        if (!product) return 0;
-        let basePrice = product.prices[selectedSize]
+        if (!product || !selectedSize) return 0;
+        let basePrice = product.prices[selectedSize] || 0;
         let extrasPrice = selectedExtras.length * 500 // ₦500 per extra
         return (basePrice + extrasPrice)
     }
@@ -137,7 +140,7 @@ export const ProductPage = () => {
                         </Flex>
                     </Box>
                     <Text fontSize="2xl" fontWeight="black" color="red.500">
-                        ₦{product.prices[selectedSize].toLocaleString()}
+                        ₦{(product.prices?.[selectedSize] || 0).toLocaleString()}
                     </Text>
                 </Flex>
 
@@ -147,15 +150,15 @@ export const ProductPage = () => {
 
                 {/* Size Selection */}
                 <Text fontWeight="bold" mb={3} color="gray.700">Size</Text>
-                <Flex gap={3} mb={6}>
-                    {Object.keys(product.prices).map((size) => (
+                <Flex gap={3} mb={6} flexWrap="wrap">
+                    {product.prices && Object.keys(product.prices).map((size) => (
                         <Button
                             key={size}
-                            flex={1}
+                            minW="60px"
                             variant={selectedSize === size ? "solid" : "outline"}
                             colorScheme="red"
                             borderRadius="xl"
-                            onClick={() => setSelectedSize(size as any)}
+                            onClick={() => setSelectedSize(size)}
                         >
                             {size}
                         </Button>

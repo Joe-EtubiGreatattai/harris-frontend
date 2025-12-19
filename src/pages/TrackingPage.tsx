@@ -1,12 +1,13 @@
 import { Box, Flex, Text, Image, Button, IconButton, VStack, Center, Spinner } from "@chakra-ui/react"
 import { useNavigate } from "react-router-dom"
-import { IoTimeOutline, IoCall, IoChevronBack, IoClose } from "react-icons/io5"
+import { IoTimeOutline, IoCall, IoChevronBack, IoClose, IoWarning } from "react-icons/io5"
 import { useUser } from "../context/UserContext"
 import { useState, useEffect } from "react"
 import type { Order } from "../context/UserContext"
+import { OrderProgress } from "../components/tracking/OrderProgress"
 
 // Persistent Timer Component
-const OrderTimer = ({ createdAt }: { createdAt: string }) => {
+const OrderTimer = ({ createdAt, isBusy }: { createdAt: string, isBusy?: boolean }) => {
     const [timeLeft, setTimeLeft] = useState(0)
 
     useEffect(() => {
@@ -14,7 +15,9 @@ const OrderTimer = ({ createdAt }: { createdAt: string }) => {
             const start = new Date(createdAt).getTime()
             const now = new Date().getTime()
             const elapsed = Math.floor((now - start) / 1000)
-            const duration = 60 * 60 // 60 minutes
+            const baseDuration = 45 * 60 // 45 minutes base
+            const busyExtra = isBusy ? 20 * 60 : 0 // 20 extra minutes if busy
+            const duration = baseDuration + busyExtra
             return Math.max(0, duration - elapsed)
         }
 
@@ -24,7 +27,7 @@ const OrderTimer = ({ createdAt }: { createdAt: string }) => {
         }, 1000)
 
         return () => clearInterval(timer)
-    }, [createdAt])
+    }, [createdAt, isBusy])
 
     const formatTime = (seconds: number) => {
         const mins = Math.floor(seconds / 60)
@@ -52,22 +55,13 @@ const OrderTimer = ({ createdAt }: { createdAt: string }) => {
     )
 }
 
-const getOrderMessage = (status: string) => {
-    switch (status) {
-        case 'Pending': return "Order confirmed";
-        case 'Preparing': return "Order being prepared";
-        case 'Ready for Delivery': return "Order ready for delivery";
-        case 'Out for Delivery': return "Order out for delivery";
-        case 'Delivered': return "Delivered";
-        default: return "Order Confirmed";
-    }
-}
-
 export const TrackingPage = () => {
     const navigate = useNavigate()
     const { activeOrders, completeOrder, isLoadingOrders } = useUser()
-    const [showConfirm, setShowConfirm] = useState<{ id: string } | null>(null)
+    const [showConfirm, setShowConfirm] = useState<Order | null>(null)
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
+
+    const isBusy = activeOrders.length > 5
 
     if (isLoadingOrders) {
         return (
@@ -88,134 +82,124 @@ export const TrackingPage = () => {
     }
 
     return (
-        <Box minH="100vh" bg="#E53E3E" color="white" position="relative" overflowY="auto">
-            {/* Decorators */}
-            <Box position="absolute" top="-50px" left="-50px" w="200px" h="200px" bg="white" opacity="0.1" borderRadius="full" />
-            <Box position="absolute" top="100px" right="-50px" w="100px" h="100px" bg="white" opacity="0.05" borderRadius="full" />
-
-            {/* Back Button */}
-            <Box position="absolute" top={6} left={6} zIndex={10}>
+        <Box pb={20} bg="blue.900" minH="100vh">
+            {/* Header */}
+            <Flex align="center" px={6} py={6} position="sticky" top={0} zIndex={10}>
                 <IconButton
-                    aria-label="Back to Home"
+                    aria-label="Back"
                     variant="ghost"
-                    onClick={() => navigate('/')}
-                    bg="white/20"
                     color="white"
-                    borderRadius="full"
-                    _hover={{ bg: "white/30" }}
-                    size="lg"
+                    onClick={() => navigate('/')}
+                    _hover={{ bg: "white/10" }}
                 >
                     <IoChevronBack size={24} />
                 </IconButton>
-            </Box>
+                <Text fontWeight="bold" fontSize="lg" color="white" flex={1} textAlign="center" mr={10}>Track Orders</Text>
+            </Flex>
 
-            <Flex direction="column" pt={20} pb={8} px={6}>
-                <Text textAlign="center" fontSize="3xl" fontWeight="bold" mb={6} lineHeight="1.2">
-                    {activeOrders.length > 0 ? "Track your orders" : "No active orders"}
-                </Text>
+            <Flex direction="column" p={6} gap={6}>
+                {isBusy && (
+                    <Flex
+                        bg="yellow.400"
+                        p={4}
+                        borderRadius="2xl"
+                        align="center"
+                        gap={3}
+                        boxShadow="lg"
+                    >
+                        <IoWarning size={24} color="gray.800" />
+                        <Box>
+                            <Text fontWeight="bold" fontSize="sm" color="gray.800">High Demand Today</Text>
+                            <Text fontSize="xs" color="gray.700">Kitchen is busy! Delivery might take a bit longer.</Text>
+                        </Box>
+                    </Flex>
+                )}
 
-                <VStack gap={6} align="stretch" w="full" maxW="md" mx="auto">
-                    {Array.from(new Set(activeOrders.map(o => o.id))).map(id => {
-                        const order = activeOrders.find(o => o.id === id)!;
-                        const rider = order.assignedRider;
+                <VStack align="stretch" gap={6}>
+                    {activeOrders.map(order => (
+                        <Box
+                            key={`${order.id}-${order.status}`}
+                            bg="white/10"
+                            borderRadius="3xl"
+                            p={4}
+                            backdropFilter="blur(10px)"
+                            border="1px solid rgba(255,255,255,0.2)"
+                            onClick={() => setSelectedOrder(order)} // Click to view details
+                            cursor="pointer"
+                            _hover={{ bg: "white/20" }}
+                            transition="all 0.2s"
+                        >
+                            <OrderProgress status={order.status} />
 
-                        return (
-                            <Box
-                                key={`${order.id}-${order.status}`}
-                                bg="white/10"
-                                borderRadius="3xl"
-                                p={4}
-                                backdropFilter="blur(10px)"
-                                border="1px solid rgba(255,255,255,0.2)"
-                                onClick={() => setSelectedOrder(order)} // Click to view details
-                                cursor="pointer"
-                                _hover={{ bg: "white/20" }}
-                                transition="all 0.2s"
-                            >
-                                <Center mb={4}>
-                                    <Text fontSize="xl" fontWeight="black" textAlign="center" color="white">
-                                        {getOrderMessage(order.status)}
-                                    </Text>
-                                </Center>
+                            <Flex justify="space-between" align="center" mb={4}>
+                                <Text fontWeight="bold" opacity={0.8}>Order #{order.id}</Text>
+                                <Text fontSize="sm" opacity={0.8}>{order.items.length} items • ₦{order.total.toLocaleString()}</Text>
+                            </Flex>
 
-                                <Flex justify="space-between" align="center" mb={4}>
-                                    <Text fontWeight="bold" opacity={0.8}>Order #{order.id}</Text>
-                                    <Text fontSize="sm" opacity={0.8}>{order.items.length} items • ₦{order.total.toLocaleString()}</Text>
-                                </Flex>
+                            {/* Single Main Item Image or Stack */}
+                            <Center position="relative" my={4}>
+                                <Image
+                                    src={order.items[0]?.image || "https://images.unsplash.com/photo-1513104890138-7c749659a591?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"}
+                                    w="200px"
+                                    h="200px"
+                                    objectFit="cover"
+                                    borderRadius="full"
+                                    border="4px solid rgba(255,255,255,0.2)"
+                                    boxShadow="2xl"
+                                    animation="pulse 2s infinite"
+                                />
+                                {(order.status === 'Preparing' || order.status === 'Ready for Delivery' || order.status === 'Out for Delivery') ? (
+                                    <OrderTimer createdAt={order.createdAt} isBusy={isBusy} />
+                                ) : null}
+                            </Center>
 
-                                {/* Single Main Item Image or Stack */}
-                                <Center position="relative" my={4}>
-                                    <Image
-                                        src={order.items[0]?.image || "https://images.unsplash.com/photo-1513104890138-7c749659a591?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"}
-                                        w="200px"
-                                        h="200px"
-                                        objectFit="cover"
-                                        borderRadius="full"
-                                        border="4px solid rgba(255,255,255,0.2)"
-                                        boxShadow="2xl"
-                                        animation="pulse 2s infinite"
-                                    />
-                                    {(order.status === 'Preparing' || order.status === 'Ready for Delivery' || order.status === 'Out for Delivery') ? (
-                                        <OrderTimer createdAt={order.createdAt} />
-                                    ) : null}
-                                </Center>
-
-                                {/* Delivery Person - Only show when ready or out */}
-                                {(order.status === 'Ready for Delivery' || order.status === 'Out for Delivery') && (
-                                    <Box w="full" bg="white" borderRadius="2xl" p={4} color="gray.800" shadow="lg" mt={4}>
-                                        <Flex align="center" mb={4}>
-                                            <Image
-                                                src={rider?.image || "https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3"}
-                                                w="40px"
-                                                h="40px"
-                                                borderRadius="full"
-                                                mr={3}
-                                                objectFit="cover"
-                                            />
-                                            <Box>
-                                                <Text fontWeight="bold" fontSize="sm">{rider?.name || "Assigning Rider..."}</Text>
-                                                <Text color="gray.500" fontSize="xs">{rider ? "Delivery Man" : "Please wait..."}</Text>
-                                            </Box>
-                                            {rider?.phone && (
-                                                <Flex ml="auto" gap={2}>
-                                                    <Box
-                                                        p={2}
-                                                        bg="red.50"
-                                                        borderRadius="full"
-                                                        color="red.500"
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            window.location.href = `tel:${rider.phone}`;
-                                                        }}
-                                                        cursor="pointer"
-                                                        _hover={{ bg: "red.100" }}
-                                                    >
-                                                        <IoCall size={16} />
-                                                    </Box>
-                                                </Flex>
-                                            )}
-                                        </Flex>
-
-                                        <Button
-                                            w="full"
-                                            bg="red.500"
-                                            color="white"
-                                            borderRadius="xl"
-                                            size="lg"
-                                            fontWeight="bold"
-                                            _hover={{ bg: "red.600" }}
+                            {/* Delivery Person - Simplified */}
+                            {(order.status === 'Ready for Delivery' || order.status === 'Out for Delivery') && order.assignedRider && (
+                                <Box w="full" bg="white" borderRadius="2xl" p={4} color="gray.800" shadow="lg" mt={4}>
+                                    <Flex align="center">
+                                        <Image
+                                            src={order.assignedRider.image || "https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3"}
+                                            w="40px"
+                                            h="40px"
+                                            borderRadius="full"
+                                            mr={3}
+                                            objectFit="cover"
+                                        />
+                                        <Box flex={1}>
+                                            <Text fontWeight="bold" fontSize="sm">{order.assignedRider.name}</Text>
+                                            <Text color="gray.500" fontSize="xs">Rider Assigned</Text>
+                                        </Box>
+                                        <IconButton
+                                            aria-label="Call Rider"
+                                            variant="ghost"
+                                            colorScheme="red"
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                setShowConfirm({ id: order.id });
+                                                window.location.href = `tel:${order.assignedRider?.phone}`;
                                             }}
                                         >
-                                            Received Order
-                                        </Button>
-                                    </Box>
-                                )}
-                            </Box>
-                        );
-                    })}
+                                            <IoCall size={16} />
+                                        </IconButton>
+                                    </Flex>
+
+                                    <Button
+                                        w="full"
+                                        bg="red.500"
+                                        color="white"
+                                        borderRadius="xl"
+                                        size="sm"
+                                        mt={3}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setShowConfirm(order);
+                                        }}
+                                    >
+                                        Mark as Received
+                                    </Button>
+                                </Box>
+                            )}
+                        </Box>
+                    ))}
                 </VStack>
             </Flex>
 

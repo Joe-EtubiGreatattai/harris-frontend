@@ -1,0 +1,16 @@
+{
+    "name": "Harris Pizza",
+    "short_name": "HarrisPizza",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#E53E3E",
+    "icons": [
+        {
+            "src": "https://res.cloudinary.com/doefjylyu/image/upload/v1766070489/Screenshot_2025-12-18_at_4.06.53_pm_meuhxb.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ]
+}

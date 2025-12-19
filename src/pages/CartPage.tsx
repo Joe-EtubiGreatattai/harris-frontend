@@ -1,4 +1,4 @@
-import { Box, Flex, Text, Button, IconButton, Image, Separator, useDisclosure } from "@chakra-ui/react"
+import { Box, Flex, Text, Button, IconButton, Image, Separator, useDisclosure, Input, HStack, Badge } from "@chakra-ui/react"
 import { useState, useEffect } from "react"
 import { IoAdd, IoRemove, IoTrash, IoChevronBack } from "react-icons/io5"
 import { useCart } from "../context/CartContext"
@@ -9,9 +9,12 @@ import { api } from "../services/api"
 
 export const CartPage = () => {
     const navigate = useNavigate()
-    const { items, updateQuantity, removeFromCart, getCartTotal } = useCart()
+    const { items, updateQuantity, removeFromCart, getCartTotal, applyPromoCode, discount, appliedPromoCode } = useCart()
     const { user } = useUser()
     const { open, onOpen, onClose } = useDisclosure()
+
+    const [promoInput, setPromoInput] = useState("")
+    const [promoError, setPromoError] = useState(false)
 
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [deliveryFee, setDeliveryFee] = useState(0)
@@ -29,7 +32,17 @@ export const CartPage = () => {
     }, []);
 
     const subtotal = getCartTotal()
-    const total = subtotal + deliveryFee
+    const discountAmount = (subtotal * discount) / 100
+    const total = subtotal - discountAmount + deliveryFee
+
+    const handleApplyPromo = () => {
+        const success = applyPromoCode(promoInput)
+        if (success) {
+            setPromoError(false)
+        } else {
+            setPromoError(true)
+        }
+    }
 
     const handleCheckout = () => {
         // ALWAYS open modal to confirm address
@@ -134,10 +147,47 @@ export const CartPage = () => {
             {/* Summary */}
             {items.length > 0 && (
                 <Box position="fixed" bottom={0} left={0} right={0} bg="white" p={8} borderTopRadius="3xl" shadow="dark-lg" maxW="md" mx="auto" zIndex={20}>
+                    {/* Promo Code Input */}
+                    <Box mb={6}>
+                        <HStack gap={2}>
+                            <Input
+                                placeholder="Promo Code"
+                                value={promoInput}
+                                onChange={(e) => setPromoInput(e.target.value)}
+                                borderRadius="xl"
+                                bg="gray.50"
+                                border="none"
+                            />
+                            <Button
+                                colorPalette="red"
+                                variant="subtle"
+                                borderRadius="xl"
+                                onClick={handleApplyPromo}
+                            >
+                                Apply
+                            </Button>
+                        </HStack>
+                        {promoError && <Text color="red.500" fontSize="xs" mt={1}>Invalid promo code</Text>}
+                        {appliedPromoCode && (
+                            <Flex mt={2} align="center" gap={2}>
+                                <Badge colorPalette="green" variant="subtle" borderRadius="full" px={2}>
+                                    {appliedPromoCode} Applied
+                                </Badge>
+                                <Text fontSize="xs" color="green.600">-{discount}% off</Text>
+                            </Flex>
+                        )}
+                    </Box>
+
                     <Flex justify="space-between" mb={3}>
                         <Text color="gray.500">Subtotal</Text>
                         <Text fontWeight="bold" color="gray.800">₦{subtotal.toLocaleString()}</Text>
                     </Flex>
+                    {discount > 0 && (
+                        <Flex justify="space-between" mb={3}>
+                            <Text color="green.600">Discount ({appliedPromoCode})</Text>
+                            <Text fontWeight="bold" color="green.600">-₦{discountAmount.toLocaleString()}</Text>
+                        </Flex>
+                    )}
                     <Flex justify="space-between" mb={5}>
                         <Text color="gray.500">Delivery</Text>
                         <Text fontWeight="bold" color="gray.800">₦{deliveryFee.toLocaleString()}</Text>

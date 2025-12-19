@@ -7,6 +7,11 @@ import type { CartItem } from "./CartContext";
 export interface UserProfile {
     email: string;
     address: string;
+    favorites?: string[];
+    savedAddresses?: {
+        home?: string;
+        work?: string;
+    };
 }
 
 export interface Order {
@@ -38,6 +43,9 @@ interface UserContextType {
     completeOrder: (orderId: string) => Promise<void>;
     refreshOrders: () => void;
     updateLocalOrder: (order: Order) => void;
+    toggleFavorite: (productId: string) => void;
+    isFavorite: (productId: string) => boolean;
+    updateSavedAddress: (type: 'home' | 'work', address: string) => void;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -171,6 +179,36 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     };
 
 
+    const toggleFavorite = (productId: string) => {
+        if (!user) return;
+        const currentFavorites = user.favorites || [];
+        const newFavorites = currentFavorites.includes(productId)
+            ? currentFavorites.filter(id => id !== productId)
+            : [...currentFavorites, productId];
+
+        const updatedUser = { ...user, favorites: newFavorites };
+        setUser(updatedUser);
+        localStorage.setItem('user_profile', JSON.stringify(updatedUser));
+    };
+
+    const isFavorite = (productId: string) => {
+        return user?.favorites?.includes(productId) || false;
+    };
+
+    const updateSavedAddress = (type: 'home' | 'work', address: string) => {
+        if (!user) return;
+        const updatedUser = {
+            ...user,
+            savedAddresses: {
+                ...(user.savedAddresses || {}),
+                [type]: address
+            }
+        };
+        setUser(updatedUser);
+        localStorage.setItem('user_profile', JSON.stringify(updatedUser));
+    };
+
+
     return (
         <UserContext.Provider value={{
             user,
@@ -184,7 +222,10 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             startOrder,
             completeOrder,
             refreshOrders,
-            updateLocalOrder
+            updateLocalOrder,
+            toggleFavorite,
+            isFavorite,
+            updateSavedAddress
         }}>
             {children}
         </UserContext.Provider>

@@ -1,12 +1,12 @@
-import { Box, Flex, Text, IconButton, Image, Button, VStack, Separator } from "@chakra-ui/react"
-import { IoChevronBack, IoReceiptOutline, IoRefresh } from "react-icons/io5"
+import { Box, Flex, Text, IconButton, Image, Button, VStack, Separator, Input, HStack } from "@chakra-ui/react"
+import { IoChevronBack, IoReceiptOutline, IoRefresh, IoHomeOutline, IoBriefcaseOutline } from "react-icons/io5"
 import { useNavigate } from "react-router-dom"
 import { useUser } from "../context/UserContext"
 import { useCart } from "../context/CartContext"
 
 export const ProfilePage = () => {
     const navigate = useNavigate()
-    const { user, orderHistory } = useUser()
+    const { user, orderHistory, updateSavedAddress } = useUser()
     const { addItemsToCart, clearCart } = useCart()
 
     const handleReorder = (items: any[]) => {
@@ -52,6 +52,56 @@ export const ProfilePage = () => {
                     {user?.address || "No address set"}
                 </Text>
             </Flex>
+
+            {/* Saved Addresses */}
+            <Box px={6} mb={8}>
+                <Text fontWeight="bold" fontSize="lg" mb={4} color="gray.800">Saved Addresses</Text>
+                <VStack gap={3} align="stretch">
+                    <Box bg="white" p={4} borderRadius="2xl" shadow="sm">
+                        <HStack gap={4} mb={2}>
+                            <Flex bg="red.50" p={2} borderRadius="xl" color="red.500">
+                                <IoHomeOutline size={20} />
+                            </Flex>
+                            <Box flex={1}>
+                                <Text fontWeight="bold" fontSize="sm">Home</Text>
+                                <Input
+                                    variant="subtle"
+                                    placeholder="Set home address"
+                                    value={user?.savedAddresses?.home || ""}
+                                    onChange={(e) => updateSavedAddress('home', e.target.value)}
+                                    size="sm"
+                                    px={0}
+                                    bg="transparent"
+                                    border="none"
+                                    _focus={{ border: "none", ring: "0" }}
+                                />
+                            </Box>
+                        </HStack>
+                    </Box>
+
+                    <Box bg="white" p={4} borderRadius="2xl" shadow="sm">
+                        <HStack gap={4} mb={2}>
+                            <Flex bg="blue.50" p={2} borderRadius="xl" color="blue.500">
+                                <IoBriefcaseOutline size={20} />
+                            </Flex>
+                            <Box flex={1}>
+                                <Text fontWeight="bold" fontSize="sm">Work</Text>
+                                <Input
+                                    variant="subtle"
+                                    placeholder="Set work address"
+                                    value={user?.savedAddresses?.work || ""}
+                                    onChange={(e) => updateSavedAddress('work', e.target.value)}
+                                    size="sm"
+                                    px={0}
+                                    bg="transparent"
+                                    border="none"
+                                    _focus={{ border: "none", ring: "0" }}
+                                />
+                            </Box>
+                        </HStack>
+                    </Box>
+                </VStack>
+            </Box>
 
             {/* Order History */}
             <Box px={6}>

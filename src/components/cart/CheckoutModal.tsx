@@ -112,6 +112,34 @@ export const CheckoutModal = ({ isOpen, onClose, onConfirm, isLoading }: Checkou
                             bg="gray.50"
                             border="none"
                         />
+
+                        {/* Saved Addresses Chips */}
+                        {(user?.savedAddresses?.home || user?.savedAddresses?.work) && (
+                            <Flex mt={3} gap={2}>
+                                {user.savedAddresses.home && (
+                                    <Button
+                                        size="xs"
+                                        variant={address === user.savedAddresses.home ? "solid" : "outline"}
+                                        colorPalette="red"
+                                        borderRadius="full"
+                                        onClick={() => setAddress(user.savedAddresses!.home!)}
+                                    >
+                                        Home
+                                    </Button>
+                                )}
+                                {user.savedAddresses.work && (
+                                    <Button
+                                        size="xs"
+                                        variant={address === user.savedAddresses.work ? "solid" : "outline"}
+                                        colorPalette="red"
+                                        borderRadius="full"
+                                        onClick={() => setAddress(user.savedAddresses!.work!)}
+                                    >
+                                        Work
+                                    </Button>
+                                )}
+                            </Flex>
+                        )}
                     </Box>
                 </VStack>
 

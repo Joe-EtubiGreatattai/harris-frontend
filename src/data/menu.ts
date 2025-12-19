@@ -1,10 +1,4 @@
-export interface Price {
-    S: number;
-    M: number;
-    L: number;
-    XL: number; // For 'C'
-    Standard?: number;
-}
+export type Price = Record<string, number>;
 
 export interface Extra {
     name: string;

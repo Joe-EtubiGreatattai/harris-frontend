@@ -15,10 +15,13 @@ import { AdminPage } from './pages/AdminPage';
 import { LoginPage } from "./pages/LoginPage"
 import { ProtectedRoute } from "./components/auth/ProtectedRoute"
 
+import { OfflineBanner } from "./components/layout/OfflineBanner"
+
 function App() {
   return (
     <UserProvider>
       <CartProvider>
+        <OfflineBanner />
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
