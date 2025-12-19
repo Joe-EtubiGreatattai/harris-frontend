@@ -6,7 +6,7 @@ import { api } from "../services/api";
 import { ProductModal } from "../components/admin/ProductModal";
 import { ReviewsTab } from "../components/admin/ReviewsTab";
 import { RiderModal } from "../components/admin/RiderModal";
-import { OrderDetailsModal } from "../components/admin/OrderDetailsModal";
+import { OrderDetailsView } from "../components/admin/OrderDetailsView";
 import { socket } from "../services/socket";
 
 export const AdminPage = () => {
@@ -18,7 +18,7 @@ export const AdminPage = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [isProductModalOpen, setIsProductModalOpen] = useState(false);
     const [isRiderModalOpen, setIsRiderModalOpen] = useState(false);
-    const [selectedOrder, setSelectedOrder] = useState<any>(null); // For details modal
+    const [selectedOrder, setSelectedOrder] = useState<any>(null); // For details view
     const [editingProduct, setEditingProduct] = useState<any>(null);
     const [activeTab, setActiveTab] = useState<'orders' | 'products' | 'riders' | 'settings' | 'reviews'>('orders');
     const navigate = useNavigate();
@@ -225,6 +225,18 @@ export const AdminPage = () => {
         );
     }
 
+    // FULL PAGE VIEW FOR ORDER DETAILS
+    if (selectedOrder) {
+        return (
+            <Box minH="100vh" bg="gray.50" p={{ base: 4, md: 8 }}>
+                <OrderDetailsView
+                    order={selectedOrder}
+                    onBack={() => setSelectedOrder(null)}
+                />
+            </Box>
+        );
+    }
+
     return (
         <Box minH="100vh" bg="gray.50" p={{ base: 4, md: 8 }}>
             <Flex justify="space-between" align={{ base: "start", md: "center" }} mb={8} direction={{ base: "column", md: "row" }} gap={4}>
@@ -383,6 +395,10 @@ export const AdminPage = () => {
                                                 )}
                                             </>
                                         )}
+                                        {/* NEW: View Details Button for Orders Tab as well */}
+                                        <Button size="sm" variant="ghost" onClick={() => handleViewOrder(order.orderId)}>
+                                            View Details
+                                        </Button>
                                     </HStack>
                                 </Flex>
                             </Box>
@@ -554,12 +570,6 @@ export const AdminPage = () => {
                 isOpen={isRiderModalOpen}
                 onClose={() => setIsRiderModalOpen(false)}
                 onSave={handleSaveRider}
-            />
-
-            <OrderDetailsModal
-                isOpen={!!selectedOrder}
-                onClose={() => setSelectedOrder(null)}
-                order={selectedOrder}
             />
         </Box >
     );
