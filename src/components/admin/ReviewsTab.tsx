@@ -101,6 +101,16 @@ export const ReviewsTab = ({ ratings, onViewOrder }: { ratings: any[], onViewOrd
                                     </Badge>
                                     <IoStar size={12} color="#ECC94B" />
                                 </Flex>
+                                {review.sentiment && (
+                                    <Badge
+                                        mt={1}
+                                        colorScheme={review.sentiment === 'Positive' ? 'green' : review.sentiment === 'Negative' ? 'red' : 'gray'}
+                                        variant="subtle"
+                                        fontSize="xs"
+                                    >
+                                        {review.sentiment}
+                                    </Badge>
+                                )}
                             </Box>
 
                             <Box>
