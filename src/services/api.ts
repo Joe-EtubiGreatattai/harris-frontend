@@ -198,5 +198,11 @@ export const api = {
         });
         if (!response.ok) throw new Error("Failed to submit rating");
         return response.json();
+    },
+
+    getAllRatings: async () => {
+        const response = await fetch(`${API_URL}/ratings`, { headers });
+        if (!response.ok) throw new Error("Failed to fetch ratings");
+        return response.json();
     }
 };

@@ -4,6 +4,7 @@ import { IoRefresh, IoAdd, IoPencil, IoTrash, IoPerson } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
 import { api } from "../services/api";
 import { ProductModal } from "../components/admin/ProductModal";
+import { ReviewsTab } from "../components/admin/ReviewsTab";
 import { RiderModal } from "../components/admin/RiderModal";
 import { socket } from "../services/socket";
 
@@ -11,12 +12,13 @@ export const AdminPage = () => {
     const [orders, setOrders] = useState<any[]>([]);
     const [products, setProducts] = useState<any[]>([]);
     const [riders, setRiders] = useState<any[]>([]);
+    const [ratings, setRatings] = useState<any[]>([]);
     const [settings, setSettings] = useState<any>({ deliveryFee: 0 });
     const [isLoading, setIsLoading] = useState(true);
     const [isProductModalOpen, setIsProductModalOpen] = useState(false);
     const [isRiderModalOpen, setIsRiderModalOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState<any>(null);
-    const [activeTab, setActiveTab] = useState<'orders' | 'products' | 'riders' | 'settings'>('orders');
+    const [activeTab, setActiveTab] = useState<'orders' | 'products' | 'riders' | 'settings' | 'reviews'>('orders');
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -68,16 +70,18 @@ export const AdminPage = () => {
     const fetchData = async () => {
         setIsLoading(true);
         try {
-            const [ordersData, productsData, ridersData, settingsData] = await Promise.all([
+            const [ordersData, productsData, ridersData, settingsData, ratingsData] = await Promise.all([
                 api.getAllOrders(),
                 api.getProducts(),
                 api.getRiders(),
-                api.getSettings()
+                api.getSettings(),
+                api.getAllRatings()
             ]);
             setOrders(ordersData);
             setProducts(productsData);
             setRiders(ridersData);
             setSettings(settingsData);
+            setRatings(ratingsData);
         } catch (error) {
             console.error("Failed to load data");
         } finally {
@@ -269,6 +273,16 @@ export const AdminPage = () => {
                         whiteSpace="nowrap"
                     >
                         Settings
+                    </Button>
+                    <Button
+                        variant={activeTab === 'reviews' ? 'solid' : 'ghost'}
+                        colorScheme={activeTab === 'reviews' ? 'red' : 'gray'}
+                        onClick={() => setActiveTab('reviews')}
+                        borderRadius="lg"
+                        size={{ base: "sm", md: "md" }}
+                        whiteSpace="nowrap"
+                    >
+                        Reviews ({ratings.length})
                     </Button>
                 </Flex>
             </Box>
@@ -510,6 +524,10 @@ export const AdminPage = () => {
                             </Button>
                         </VStack>
                     </Box>
+                )}
+
+                {activeTab === 'reviews' && (
+                    <ReviewsTab ratings={ratings} />
                 )}
             </Box>
 
