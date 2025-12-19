@@ -94,7 +94,8 @@ export const TrackingPage = () => {
         )
     }
 
-    if (activeOrders.length === 0) {
+    // Only redirect if no active orders AND no rating is currently happening
+    if (activeOrders.length === 0 && !ratingOrder) {
         return (
             <Center h="100vh" bg="#E53E3E" color="white" flexDirection="column">
                 <Text fontSize="2xl" fontWeight="bold" mb={4}>No active orders</Text>
