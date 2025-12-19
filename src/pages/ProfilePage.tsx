@@ -1,5 +1,6 @@
 import { Box, Flex, Text, IconButton, Image, Button, VStack, Separator, Input, HStack } from "@chakra-ui/react"
-import { IoChevronBack, IoReceiptOutline, IoRefresh, IoHomeOutline, IoBriefcaseOutline } from "react-icons/io5"
+import { IoChevronBack, IoReceiptOutline, IoRefresh, IoHomeOutline, IoBriefcaseOutline, IoNotificationsOutline, IoNotifications } from "react-icons/io5"
+import { pushNotificationService } from "../services/pushNotificationService"
 import { useNavigate } from "react-router-dom"
 import { useUser } from "../context/UserContext"
 import { useCart } from "../context/CartContext"

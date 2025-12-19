@@ -14,13 +14,16 @@ import { PaymentCallbackPage } from "./pages/PaymentCallbackPage"
 import { AdminPage } from './pages/AdminPage';
 import { LoginPage } from "./pages/LoginPage"
 import { ProtectedRoute } from "./components/auth/ProtectedRoute"
-
+import { Toaster } from "./components/ui/toaster"
+import { OrderUpdateHandler } from "./components/notifications/OrderUpdateHandler"
 import { OfflineBanner } from "./components/layout/OfflineBanner"
 
 function App() {
   return (
     <UserProvider>
       <CartProvider>
+        <Toaster />
+        <OrderUpdateHandler />
         <OfflineBanner />
         <BrowserRouter>
           <Routes>

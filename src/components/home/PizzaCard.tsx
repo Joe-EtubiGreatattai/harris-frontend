@@ -24,9 +24,10 @@ export const PizzaCard = ({ id, name, description, price, prices, image, isMyste
     const favorited = isFavorite(id)
 
     // Calculate display price: if prices object exists, show lowest
-    const displayPrice = prices
-        ? Math.min(...Object.values(prices))
-        : price || 0;
+    const priceValues = prices ? Object.values(prices).filter(v => typeof v === 'number') : [];
+    const displayPrice = priceValues.length > 0
+        ? Math.min(...priceValues)
+        : (typeof price === 'number' ? price : 0);
 
     const hasMultipleSizes = prices && Object.keys(prices).length > 1;
 

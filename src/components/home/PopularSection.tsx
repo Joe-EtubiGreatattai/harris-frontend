@@ -49,7 +49,7 @@ export const PopularSection = ({ selectedCategory, searchQuery, products }: Popu
                             id={product.id}
                             name={product.name}
                             description={product.description}
-                            price={product.prices.S}
+                            prices={product.prices}
                             image={product.image}
                             isMystery={product.id === "create-your-own"}
                             isBestSeller={product.isBestSeller}

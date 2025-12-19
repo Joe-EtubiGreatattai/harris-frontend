@@ -170,5 +170,22 @@ export const api = {
         });
         if (!response.ok) throw new Error("Failed to update settings");
         return response.json();
+    },
+
+    // Notifications
+    getVapidPublicKey: async () => {
+        const response = await fetch(`${API_URL}/notifications/vapid-public-key`, { headers });
+        if (!response.ok) throw new Error("Failed to get VAPID key");
+        return response.json();
+    },
+
+    subscribeToPush: async (email: string, subscription: any) => {
+        const response = await fetch(`${API_URL}/notifications/subscribe`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ email, subscription })
+        });
+        if (!response.ok) throw new Error("Subscription failed");
+        return response.json();
     }
 };
