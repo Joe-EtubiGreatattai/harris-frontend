@@ -60,10 +60,19 @@ export const ProductPage = () => {
             }
         };
 
+        const handleProductDeleted = ({ id: deletedId }: { id: string }) => {
+            if (deletedId === id) {
+                alert("This product is no longer available.");
+                navigate('/');
+            }
+        };
+
         socket.on('productUpdated', handleProductUpdated);
+        socket.on('productDeleted', handleProductDeleted);
 
         return () => {
             socket.off('productUpdated', handleProductUpdated);
+            socket.off('productDeleted', handleProductDeleted);
         };
     }, [id])
 

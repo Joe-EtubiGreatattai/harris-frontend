@@ -37,10 +37,18 @@ export const AdminPage = () => {
             );
         });
 
+        socket.on('productCreated', (newProduct: any) => {
+            setProducts((prev) => [newProduct, ...prev]);
+        });
+
         socket.on('productUpdated', (updatedProduct: any) => {
             setProducts((prev) =>
                 prev.map(p => p.id === updatedProduct.id ? updatedProduct : p)
             );
+        });
+
+        socket.on('productDeleted', ({ id }: { id: string }) => {
+            setProducts((prev) => prev.filter(p => p.id !== id));
         });
 
         socket.on('riderUpdated', (updatedRider: any) => {

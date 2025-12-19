@@ -52,14 +52,38 @@ export const HomePage = () => {
         }
         loadProducts()
 
-        socket.on('productUpdated', (updatedProduct: any) => {
-            setProducts(prev =>
-                prev.map(p => p.id === updatedProduct.id ? updatedProduct : p)
-            );
+        const syncCache = (updatedList: Product[]) => {
+            localStorage.setItem('cachedProducts', JSON.stringify(updatedList));
+        };
+
+        socket.on('productCreated', (newProduct: Product) => {
+            setProducts(prev => {
+                const updated = [newProduct, ...prev];
+                syncCache(updated);
+                return updated;
+            });
+        });
+
+        socket.on('productUpdated', (updatedProduct: Product) => {
+            setProducts(prev => {
+                const updated = prev.map(p => p.id === updatedProduct.id ? updatedProduct : p);
+                syncCache(updated);
+                return updated;
+            });
+        });
+
+        socket.on('productDeleted', ({ id }: { id: string }) => {
+            setProducts(prev => {
+                const updated = prev.filter(p => p.id !== id);
+                syncCache(updated);
+                return updated;
+            });
         });
 
         return () => {
+            socket.off('productCreated');
             socket.off('productUpdated');
+            socket.off('productDeleted');
         };
     }, [])
 
