@@ -213,7 +213,7 @@ export const TrackingPage = () => {
                                             <Box w="full" bg="white" borderRadius="2xl" p={4} color="gray.800" shadow="lg" mt={4}>
                                                 <Flex align="center">
                                                     <Image
-                                                        src={order.assignedRider.image || "https://depositphotos.com/vector/profile-icon-african-american-male-avatar-man-beard-portrait-casual-person-silhouette-face-134338810.html"}
+                                                        src={order.assignedRider.image || "https://st2.depositphotos.com/1006318/10457/v/450/depositphotos_104579964-stock-illustration-business-man-profile-icon-african.jpg"}
                                                         w="40px"
                                                         h="40px"
                                                         borderRadius="full"
