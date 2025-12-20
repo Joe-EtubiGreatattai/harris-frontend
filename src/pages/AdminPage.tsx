@@ -1,6 +1,6 @@
 import { Box, Flex, Text, Button, VStack, HStack, Badge, Image, IconButton, Skeleton } from "@chakra-ui/react";
 import { useState, useEffect } from "react";
-import { IoRefresh, IoAdd, IoPencil, IoTrash, IoPerson, IoMegaphone } from "react-icons/io5";
+import { IoRefresh, IoAdd, IoPencil, IoTrash, IoPerson, IoMegaphone, IoWallet } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
 import { api } from "../services/api";
 import { ProductModal } from "../components/admin/ProductModal";
@@ -8,6 +8,7 @@ import { ReviewsTab } from "../components/admin/ReviewsTab";
 import { RiderModal } from "../components/admin/RiderModal";
 import { OrderDetailsView } from "../components/admin/OrderDetailsView";
 import { CampaignTab } from "../components/admin/CampaignTab";
+import { WithdrawalTab } from "../components/admin/WithdrawalTab";
 import { socket } from "../services/socket";
 
 export const AdminPage = () => {
@@ -22,7 +23,7 @@ export const AdminPage = () => {
     const [isRiderModalOpen, setIsRiderModalOpen] = useState(false);
     const [selectedOrder, setSelectedOrder] = useState<any>(null); // For details view
     const [editingProduct, setEditingProduct] = useState<any>(null);
-    const [activeTab, setActiveTab] = useState<'orders' | 'products' | 'riders' | 'settings' | 'reviews' | 'campaign'>('orders');
+    const [activeTab, setActiveTab] = useState<'orders' | 'products' | 'riders' | 'settings' | 'reviews' | 'campaign' | 'withdrawals'>('orders');
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -364,6 +365,19 @@ export const AdminPage = () => {
                             <Text>Campaign</Text>
                         </HStack>
                     </Button>
+                    <Button
+                        variant={activeTab === 'withdrawals' ? 'solid' : 'ghost'}
+                        colorScheme={activeTab === 'withdrawals' ? 'red' : 'gray'}
+                        onClick={() => setActiveTab('withdrawals')}
+                        borderRadius="lg"
+                        size={{ base: "sm", md: "md" }}
+                        whiteSpace="nowrap"
+                    >
+                        <HStack gap={2}>
+                            <IoWallet />
+                            <Text>Withdrawals</Text>
+                        </HStack>
+                    </Button>
                 </Flex>
             </Box>
 
@@ -626,6 +640,10 @@ export const AdminPage = () => {
                         categories={[...new Set(products.map(p => p.category))]}
                         onRefresh={fetchData}
                     />
+                )}
+
+                {activeTab === 'withdrawals' && (
+                    <WithdrawalTab />
                 )}
             </Box>
 

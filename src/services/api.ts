@@ -258,5 +258,41 @@ export const api = {
         const response = await fetch(`${API_URL}/promos/generate-code`, { headers });
         if (!response.ok) throw new Error("Failed to generate promo code");
         return response.json();
+    },
+
+    // Payouts/Withdrawals
+    getBanks: async () => {
+        const response = await fetch(`${API_URL}/payouts/banks`, { headers });
+        if (!response.ok) throw new Error("Failed to fetch banks");
+        return response.json();
+    },
+
+    verifyAccount: async (accountNumber: string, bankCode: string) => {
+        const response = await fetch(`${API_URL}/payouts/verify-account`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ accountNumber, bankCode })
+        });
+        if (!response.ok) throw new Error("Verification failed");
+        return response.json();
+    },
+
+    initiateWithdrawal: async (data: any) => {
+        const response = await fetch(`${API_URL}/payouts/initiate`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(data)
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || "Withdrawal failed");
+        }
+        return response.json();
+    },
+
+    getWithdrawalHistory: async () => {
+        const response = await fetch(`${API_URL}/payouts/history`, { headers });
+        if (!response.ok) throw new Error("Failed to fetch history");
+        return response.json();
     }
 };
