@@ -1,5 +1,5 @@
 import { Box, Flex, Text, Button, IconButton, Image, Separator, useDisclosure, Input, HStack, Badge } from "@chakra-ui/react"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { IoAdd, IoRemove, IoTrash, IoChevronBack } from "react-icons/io5"
 import { useCart } from "../context/CartContext"
 import { useUser } from "../context/UserContext"
@@ -26,7 +26,7 @@ const itemVariants = {
 
 export const CartPage = () => {
     const navigate = useNavigate()
-    const { items, updateQuantity, removeFromCart, getCartTotal, applyPromoCode, discount, appliedPromoCode, applicableCategories } = useCart()
+    const { items, updateQuantity, removeFromCart, getCartTotal, applyPromoCode, discount, appliedPromoCode, applicableCategories, deliveryFee } = useCart()
     const { user } = useUser()
     const { open, onOpen, onClose } = useDisclosure()
 
@@ -35,19 +35,7 @@ export const CartPage = () => {
 
     const [isApplyingPromo, setIsApplyingPromo] = useState(false)
     const [isSubmitting, setIsSubmitting] = useState(false)
-    const [deliveryFee, setDeliveryFee] = useState(0)
 
-    useEffect(() => {
-        const fetchSettings = async () => {
-            try {
-                const settings = await api.getSettings();
-                setDeliveryFee(settings.deliveryFee || 0);
-            } catch (err) {
-                console.error("Failed to fetch settings", err);
-            }
-        };
-        fetchSettings();
-    }, []);
 
     const subtotal = getCartTotal()
     const discountAmount = (subtotal * discount) / 100

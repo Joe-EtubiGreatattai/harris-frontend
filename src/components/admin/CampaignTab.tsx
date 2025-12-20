@@ -93,9 +93,11 @@ export const CampaignTab = ({ promos, categories, onRefresh }: CampaignTabProps)
     const handleToggleStatus = async (id: string) => {
         try {
             await api.togglePromoStatus(id);
-            onRefresh();
+            // We don't call onRefresh() anymore to avoid the global loading state
+            // The UI will update via the socket.io listener in AdminPage
         } catch (error) {
             alert("Toggle failed");
+            onRefresh(); // Refresh only on error to sync state
         }
     };
 

@@ -30,6 +30,7 @@ interface CartContextType {
     discount: number;
     appliedPromoCode: string | null;
     applicableCategories: string[];
+    deliveryFee: number;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -44,10 +45,23 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     const [discount, setDiscount] = useState(0);
     const [appliedPromoCode, setAppliedPromoCode] = useState<string | null>(null);
     const [applicableCategories, setApplicableCategories] = useState<string[]>([]);
+    const [deliveryFee, setDeliveryFee] = useState(0);
 
     useEffect(() => {
         localStorage.setItem('cart', JSON.stringify(items));
     }, [items]);
+
+    useEffect(() => {
+        const fetchSettings = async () => {
+            try {
+                const settings = await api.getSettings();
+                setDeliveryFee(settings.deliveryFee || 0);
+            } catch (err) {
+                console.error("Failed to fetch settings", err);
+            }
+        };
+        fetchSettings();
+    }, []);
 
     useEffect(() => {
         const handleCartUpdate = (updatedItems: CartItem[]) => {
@@ -73,14 +87,20 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
             }));
         };
 
+        const handleSettingsUpdated = (newSettings: any) => {
+            setDeliveryFee(newSettings.deliveryFee || 0);
+        };
+
         socket.on('cartUpdated', handleCartUpdate);
         socket.on('cartCleared', handleCartClear);
         socket.on('productUpdated', handleProductUpdated);
+        socket.on('settingsUpdated', handleSettingsUpdated);
 
         return () => {
             socket.off('cartUpdated', handleCartUpdate);
             socket.off('cartCleared', handleCartClear);
             socket.off('productUpdated', handleProductUpdated);
+            socket.off('settingsUpdated', handleSettingsUpdated);
         };
     }, []);
 
@@ -157,7 +177,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
             applyPromoCode,
             discount,
             appliedPromoCode,
-            applicableCategories
+            applicableCategories,
+            deliveryFee
         }}>
             {children}
         </CartContext.Provider>

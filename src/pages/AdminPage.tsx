@@ -65,22 +65,48 @@ export const AdminPage = () => {
             setProducts((prev) => prev.filter(p => p.id !== id));
         });
 
-        socket.on('riderUpdated', (updatedRider: any) => {
-            setRiders((prev) =>
-                prev.map(r => r._id === updatedRider._id ? updatedRider : r)
-            );
+        socket.on('riderCreated', (newRider: any) => {
+            setRiders((prev) => [newRider, ...prev]);
+        });
+
+        socket.on('riderDeleted', ({ _id }: { _id: string }) => {
+            setRiders((prev) => prev.filter(r => r._id !== _id));
         });
 
         socket.on('ratingCreated', (newRating: any) => {
             setRatings((prev) => [newRating, ...prev]);
         });
 
+        socket.on('promoCreated', (newPromo: any) => {
+            setPromos((prev) => [newPromo, ...prev]);
+        });
+
+        socket.on('promoUpdated', (updatedPromo: any) => {
+            setPromos((prev) =>
+                prev.map(p => p._id === updatedPromo._id ? updatedPromo : p)
+            );
+        });
+
+        socket.on('promoDeleted', ({ _id }: { _id: string }) => {
+            setPromos((prev) => prev.filter(p => p._id !== _id));
+        });
+
+        socket.on('settingsUpdated', (newSettings: any) => {
+            setSettings(newSettings);
+        });
+
         return () => {
             socket.off('newOrder');
             socket.off('orderUpdated');
             socket.off('productUpdated');
+            socket.off('riderCreated');
             socket.off('riderUpdated');
+            socket.off('riderDeleted');
             socket.off('ratingCreated');
+            socket.off('promoCreated');
+            socket.off('promoUpdated');
+            socket.off('promoDeleted');
+            socket.off('settingsUpdated');
         };
     }, []);
 

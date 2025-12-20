@@ -42,6 +42,20 @@ export const HomePage = () => {
     const [searchParams] = useSearchParams()
 
     useEffect(() => {
+        socket.on('settingsUpdated', (updatedSettings: any) => {
+            toaster.create({
+                title: "Settings Updated",
+                description: `Delivery fee is now ₦${updatedSettings.deliveryFee}`,
+                type: "info"
+            })
+        })
+
+        return () => {
+            socket.off('settingsUpdated')
+        }
+    }, [])
+
+    useEffect(() => {
         const promoFromUrl = searchParams.get('promo')
         if (promoFromUrl && !appliedPromoCode) {
             const autoApply = async () => {
