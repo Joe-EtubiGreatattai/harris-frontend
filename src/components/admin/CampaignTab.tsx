@@ -143,6 +143,7 @@ export const CampaignTab = ({ promos, categories, onRefresh }: CampaignTabProps)
                                 <Box as="th" p={4} textAlign="left" fontSize="xs" color="gray.500" textTransform="uppercase">Discount</Box>
                                 <Box as="th" p={4} textAlign="left" fontSize="xs" color="gray.500" textTransform="uppercase">Usage</Box>
                                 <Box as="th" p={4} textAlign="left" fontSize="xs" color="gray.500" textTransform="uppercase">Categories</Box>
+                                <Box as="th" p={4} textAlign="left" fontSize="xs" color="gray.500" textTransform="uppercase">Expires</Box>
                                 <Box as="th" p={4} textAlign="left" fontSize="xs" color="gray.500" textTransform="uppercase">Status</Box>
                                 <Box as="th" p={4} textAlign="right" fontSize="xs" color="gray.500" textTransform="uppercase">Actions</Box>
                             </Box>
@@ -150,6 +151,25 @@ export const CampaignTab = ({ promos, categories, onRefresh }: CampaignTabProps)
                         <Box as="tbody">
                             {promos.map((promo) => {
                                 const usagePercent = Math.min(100, Math.round((promo.usedCount / promo.usageLimit) * 100));
+
+                                const getExpiryInfo = () => {
+                                    if (!promo.expiresAt) return { text: "Never", days: null };
+                                    const expiry = new Date(promo.expiresAt);
+                                    const today = new Date();
+                                    today.setHours(0, 0, 0, 0);
+                                    const diffTime = expiry.getTime() - today.getTime();
+                                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                                    const dateStr = expiry.toLocaleDateString('en-GB', {
+                                        day: 'numeric',
+                                        month: 'short'
+                                    });
+
+                                    return { text: dateStr, days: diffDays };
+                                };
+
+                                const expiryInfo = getExpiryInfo();
+
                                 return (
                                     <Box as="tr" key={promo._id} borderBottom="1px solid" borderColor="gray.50">
                                         <Box as="td" p={4}>
@@ -189,6 +209,21 @@ export const CampaignTab = ({ promos, categories, onRefresh }: CampaignTabProps)
                                                     ))
                                                 )}
                                             </HStack>
+                                        </Box>
+                                        <Box as="td" p={4}>
+                                            <VStack align="flex-start" gap={0}>
+                                                <Text fontSize="sm" fontWeight="medium">{expiryInfo.text}</Text>
+                                                {expiryInfo.days !== null && (
+                                                    <Badge
+                                                        variant="plain"
+                                                        size="xs"
+                                                        colorScheme={expiryInfo.days < 0 ? "red" : expiryInfo.days <= 3 ? "orange" : "gray"}
+                                                        fontSize="10px"
+                                                    >
+                                                        {expiryInfo.days < 0 ? "Expired" : expiryInfo.days === 0 ? "Today" : `${expiryInfo.days} days left`}
+                                                    </Badge>
+                                                )}
+                                            </VStack>
                                         </Box>
                                         <Box as="td" p={4}>
                                             <Badge colorScheme={promo.isActive ? "green" : "gray"}>
@@ -386,19 +421,19 @@ export const CampaignTab = ({ promos, categories, onRefresh }: CampaignTabProps)
                             <Center>
                                 <Box
                                     ref={cardRef}
-                                    bg="red.500"
+                                    bg="#E53E3E"
                                     w="320px"
                                     h="460px"
                                     borderRadius="2xl"
                                     p={6}
                                     color="white"
                                     position="relative"
-                                    shadow="2xl"
+                                    style={{ boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)" }}
                                     textAlign="center"
                                     overflow="hidden"
                                 >
-                                    <Box position="absolute" top="-40px" left="-40px" w="120px" h="120px" bg="whiteAlpha.100" borderRadius="full" />
-                                    <Box position="absolute" bottom="-80px" right="-80px" w="240px" h="240px" bg="whiteAlpha.100" borderRadius="full" />
+                                    <Box position="absolute" top="-40px" left="-40px" w="120px" h="120px" bg="rgba(255, 255, 255, 0.1)" borderRadius="full" />
+                                    <Box position="absolute" bottom="-80px" right="-80px" w="240px" h="240px" bg="rgba(255, 255, 255, 0.1)" borderRadius="full" />
 
                                     <VStack gap={5} position="relative" zIndex={1}>
                                         <Text fontSize="xl" fontWeight="black" letterSpacing="widest">HARRIS PIZZA</Text>
@@ -407,7 +442,7 @@ export const CampaignTab = ({ promos, categories, onRefresh }: CampaignTabProps)
                                             <Text as="span" fontSize="xl">DISCOUNT</Text>
                                         </Text>
 
-                                        <Box bg="white" p={3} borderRadius="xl" shadow="inner">
+                                        <Box bg="#FFFFFF" p={3} borderRadius="xl" style={{ boxShadow: "inset 0 2px 4px 0 rgba(0, 0, 0, 0.06)" }}>
                                             <QRCodeSVG
                                                 value={`${window.location.origin}/?promo=${selectedPromo?.code}`}
                                                 size={140}
@@ -416,7 +451,7 @@ export const CampaignTab = ({ promos, categories, onRefresh }: CampaignTabProps)
 
                                         <VStack gap={0}>
                                             <Text fontSize="xs" opacity={0.8}>Use Promo Code</Text>
-                                            <Text fontSize="3xl" fontWeight="black" color="yellow.300">{selectedPromo?.code}</Text>
+                                            <Text fontSize="3xl" fontWeight="black" color="#F6E05E">{selectedPromo?.code}</Text>
                                         </VStack>
 
                                         <Text fontSize="2xs" opacity={0.6}>Scan to Order Now • Terms Apply</Text>
