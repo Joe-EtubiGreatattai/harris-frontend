@@ -109,6 +109,9 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     useEffect(() => {
         if (!user?.email) return;
 
+        // Join user-specific room for scoped updates
+        socket.emit('join', user.email);
+
         const handleOrderUpdate = (updatedOrder: any) => {
             // Check if this order belongs to the current user
             const orderEmail = updatedOrder.user?.email || updatedOrder.user;

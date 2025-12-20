@@ -2,6 +2,8 @@ import { createContext, useContext, useState, useEffect } from 'react';
 import { socket } from "../services/socket";
 import type { ReactNode } from 'react';
 
+import { useUser } from "./UserContext";
+
 export interface CartItem {
     id: string; // unique ID for cart entry (e.g. productID + timestamps or random)
     productId: string;
@@ -31,6 +33,7 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
+    const { user } = useUser();
     const [items, setItems] = useState<CartItem[]>(() => {
         const saved = localStorage.getItem('cart');
         return saved ? JSON.parse(saved) : [];
@@ -82,7 +85,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         const id = Math.random().toString(36).substr(2, 9);
         const newItems = [...items, { ...newItem, id }];
         setItems(newItems);
-        socket.emit('cartUpdated', newItems);
+        socket.emit('cartUpdated', { email: user?.email, items: newItems });
     };
 
     const addItemsToCart = (newItems: Omit<CartItem, 'id'>[]) => {
@@ -92,13 +95,13 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         }));
         const combined = [...items, ...itemsWithIds];
         setItems(combined);
-        socket.emit('cartUpdated', combined);
+        socket.emit('cartUpdated', { email: user?.email, items: combined });
     };
 
     const removeFromCart = (id: string) => {
         const newItems = items.filter(item => item.id !== id);
         setItems(newItems);
-        socket.emit('cartUpdated', newItems);
+        socket.emit('cartUpdated', { email: user?.email, items: newItems });
     };
 
     const updateQuantity = (id: string, delta: number) => {
@@ -110,7 +113,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
             return item;
         });
         setItems(newItems);
-        socket.emit('cartUpdated', newItems);
+        socket.emit('cartUpdated', { email: user?.email, items: newItems });
     };
 
     const getCartTotal = () => {
@@ -121,7 +124,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         setItems([]);
         setAppliedPromoCode(null);
         setDiscount(0);
-        socket.emit('cartCleared');
+        socket.emit('cartCleared', { email: user?.email });
     };
 
     const applyPromoCode = (code: string) => {
