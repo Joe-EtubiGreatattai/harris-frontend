@@ -71,7 +71,7 @@ export const CartPage = () => {
                     phone: user.phone
                 },
                 items: items.map(item => ({
-                    productId: item.id,
+                    productId: item.productId,
                     name: item.name,
                     size: item.size,
                     price: item.price,
