@@ -13,15 +13,15 @@ export const OrderDetailsView = ({ order, onBack }: OrderDetailsViewProps) => {
     return (
         <Box bg="gray.50" minH="calc(100vh - 100px)">
             {/* Header */}
-            <Flex mb={6} justify="space-between" align="center">
-                <Button onClick={onBack} variant="ghost" gap={2}>
+            <Flex mb={{ base: 4, md: 6 }} justify="space-between" align={{ base: "start", md: "center" }} direction={{ base: "column", md: "row" }} gap={4}>
+                <Button onClick={onBack} variant="ghost" gap={2} size={{ base: "sm", md: "md" }} p={{ base: 0, md: 2 }}>
                     <IoArrowBack /> Back to Dashboard
                 </Button>
-                <Flex align="center" gap={3}>
-                    <Text fontWeight="bold" fontSize="xl">Order #{order.orderId}</Text>
+                <Flex align="center" gap={3} w={{ base: "full", md: "auto" }} justify={{ base: "space-between", md: "flex-end" }}>
+                    <Text fontWeight="bold" fontSize={{ base: "lg", md: "xl" }}>Order #{order.orderId}</Text>
                     <Badge
                         colorScheme={order.status === 'Delivered' ? 'green' : 'orange'}
-                        fontSize="md"
+                        fontSize={{ base: "xs", md: "md" }}
                         px={3} py={1}
                         borderRadius="full"
                     >
@@ -75,14 +75,14 @@ export const OrderDetailsView = ({ order, onBack }: OrderDetailsViewProps) => {
                     <Box>
                         <Flex align="center" gap={2} mb={1} color="gray.500">
                             <Icon as={IoTime} />
-                            <Text fontSize="sm" fontWeight="bold" textTransform="uppercase">Total Duration</Text>
+                            <Text fontSize="xs" fontWeight="bold" textTransform="uppercase">Total Duration</Text>
                         </Flex>
                         {order.status === 'Delivered' && order.deliveredAt ? (
-                            <Text fontSize="3xl" fontWeight="black" color="green.500">
+                            <Text fontSize={{ base: "2xl", md: "3xl" }} fontWeight="black" color="green.500">
                                 {calculateDuration(order.createdAt, order.deliveredAt)}
                             </Text>
                         ) : (
-                            <Text color="gray.400" fontStyle="italic">-</Text>
+                            <Text color="gray.400" fontStyle="italic" fontSize="sm">-</Text>
                         )}
                     </Box>
                 </SimpleGrid>
@@ -142,7 +142,7 @@ export const OrderDetailsView = ({ order, onBack }: OrderDetailsViewProps) => {
                                             <Text fontWeight="bold" fontSize="lg">{item.name}</Text>
                                             <Text fontWeight="bold" fontSize="lg">₦{(item.price * item.quantity).toLocaleString()}</Text>
                                         </Flex>
-                                        <Text fontSize="md" color="gray.600">
+                                        <Text fontSize={{ base: "sm", md: "md" }} color="gray.600">
                                             Size: {item.size} • Qty: {item.quantity}
                                         </Text>
                                         {item.extras?.length > 0 && (
@@ -173,8 +173,8 @@ export const OrderDetailsView = ({ order, onBack }: OrderDetailsViewProps) => {
                                 <Text fontWeight="medium">₦{(order.deliveryFee || 0).toLocaleString()}</Text>
                             </Flex>
                             <Flex justify="space-between" align="center" mt={4} pt={4} borderTop="1px solid" borderColor="gray.100">
-                                <Text fontWeight="bold" fontSize="xl">Total Amount</Text>
-                                <Text fontWeight="black" fontSize="3xl" color="red.500">
+                                <Text fontWeight="bold" fontSize={{ base: "lg", md: "xl" }}>Total Amount</Text>
+                                <Text fontWeight="black" fontSize={{ base: "2xl", md: "3xl" }} color="red.500">
                                     ₦{order.total.toLocaleString()}
                                 </Text>
                             </Flex>
