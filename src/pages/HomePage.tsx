@@ -10,6 +10,9 @@ import { api } from "../services/api"
 import { socket } from "../services/socket"
 import type { Product } from "../data/menu"
 import { motion } from "framer-motion"
+import { useCart } from "../context/CartContext"
+import { useSearchParams } from "react-router-dom"
+import { toaster } from "../components/ui/toaster"
 
 const containerVariants = {
     hidden: { opacity: 0 },
@@ -35,6 +38,25 @@ export const HomePage = () => {
         return saved ? JSON.parse(saved) : []
     })
     const [loading, setLoading] = useState(products.length === 0)
+    const { applyPromoCode, appliedPromoCode } = useCart()
+    const [searchParams] = useSearchParams()
+
+    useEffect(() => {
+        const promoFromUrl = searchParams.get('promo')
+        if (promoFromUrl && !appliedPromoCode) {
+            const autoApply = async () => {
+                const result = await applyPromoCode(promoFromUrl)
+                if (result.success) {
+                    toaster.create({
+                        title: "Promo Applied!",
+                        description: `Code ${promoFromUrl.toUpperCase()} has been applied to your cart.`,
+                        type: "success"
+                    })
+                }
+            }
+            autoApply()
+        }
+    }, [searchParams, appliedPromoCode, applyPromoCode])
 
     useEffect(() => {
         const loadProducts = async () => {

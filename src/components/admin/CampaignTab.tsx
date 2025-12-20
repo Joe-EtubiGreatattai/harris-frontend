@@ -45,7 +45,20 @@ export const CampaignTab = ({ promos, categories, onRefresh }: CampaignTabProps)
         expiresAt: ""
     });
 
+    const [isGenerating, setIsGenerating] = useState(false);
     const cardRef = useRef<HTMLDivElement>(null);
+
+    const handleGenerateCode = async () => {
+        setIsGenerating(true);
+        try {
+            const { code } = await api.generatePromoCode();
+            setFormData(prev => ({ ...prev, code }));
+        } catch (error) {
+            alert("Failed to generate code");
+        } finally {
+            setIsGenerating(false);
+        }
+    };
 
     const handleCreatePromo = async () => {
         setIsSubmitting(true);
@@ -93,11 +106,21 @@ export const CampaignTab = ({ promos, categories, onRefresh }: CampaignTabProps)
 
     const downloadCard = async () => {
         if (!cardRef.current) return;
-        const canvas = await html2canvas(cardRef.current);
-        const link = document.createElement('a');
-        link.download = `promo-${selectedPromo.code}.png`;
-        link.href = canvas.toDataURL();
-        link.click();
+        try {
+            const canvas = await html2canvas(cardRef.current, {
+                useCORS: true,
+                scale: 2, // Higher quality
+                backgroundColor: null,
+                logging: false
+            });
+            const link = document.createElement('a');
+            link.download = `promo-${selectedPromo.code}.png`;
+            link.href = canvas.toDataURL("image/png");
+            link.click();
+        } catch (error) {
+            console.error("Download failed:", error);
+            alert("Failed to download image. Try again.");
+        }
     };
 
     return (
@@ -244,11 +267,22 @@ export const CampaignTab = ({ promos, categories, onRefresh }: CampaignTabProps)
                             <VStack gap={4} align="stretch">
                                 <Box>
                                     <Text fontWeight="bold" mb={2} fontSize="sm">Promo Code</Text>
-                                    <Input
-                                        placeholder="e.g. PIZZALOVE"
-                                        value={formData.code}
-                                        onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
-                                    />
+                                    <HStack gap={2}>
+                                        <Input
+                                            placeholder="e.g. PIZZALOVE"
+                                            value={formData.code}
+                                            onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
+                                        />
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={handleGenerateCode}
+                                            loading={isGenerating}
+                                            px={6}
+                                        >
+                                            Generate
+                                        </Button>
+                                    </HStack>
                                 </Box>
 
                                 <HStack gap={4}>
@@ -372,7 +406,10 @@ export const CampaignTab = ({ promos, categories, onRefresh }: CampaignTabProps)
                                         </Text>
 
                                         <Box bg="white" p={3} borderRadius="xl" shadow="inner">
-                                            <QRCodeSVG value={`https://harris-frontend.onrender.com/?promo=${selectedPromo?.code}`} size={140} />
+                                            <QRCodeSVG
+                                                value={`${window.location.origin}/?promo=${selectedPromo?.code}`}
+                                                size={140}
+                                            />
                                         </Box>
 
                                         <VStack gap={0}>

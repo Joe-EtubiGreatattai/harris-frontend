@@ -252,5 +252,11 @@ export const api = {
         });
         if (!response.ok) throw new Error("Failed to delete promo");
         return response.json();
+    },
+
+    generatePromoCode: async () => {
+        const response = await fetch(`${API_URL}/promos/generate-code`, { headers });
+        if (!response.ok) throw new Error("Failed to generate promo code");
+        return response.json();
     }
 };
