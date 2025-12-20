@@ -204,5 +204,53 @@ export const api = {
         const response = await fetch(`${API_URL}/ratings`, { headers });
         if (!response.ok) throw new Error("Failed to fetch ratings");
         return response.json();
+    },
+
+    // Promos
+    getAllPromos: async () => {
+        const response = await fetch(`${API_URL}/promos`, { headers });
+        if (!response.ok) throw new Error("Failed to fetch promos");
+        return response.json();
+    },
+
+    createPromo: async (promoData: any) => {
+        const response = await fetch(`${API_URL}/promos`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(promoData)
+        });
+        if (!response.ok) throw new Error("Failed to create promo");
+        return response.json();
+    },
+
+    validatePromo: async (code: string, cartItems: any[]) => {
+        const response = await fetch(`${API_URL}/promos/validate`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ code, cartItems })
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || "Failed to validate promo");
+        }
+        return response.json();
+    },
+
+    togglePromoStatus: async (id: string) => {
+        const response = await fetch(`${API_URL}/promos/${id}/toggle`, {
+            method: 'PATCH',
+            headers
+        });
+        if (!response.ok) throw new Error("Failed to toggle promo status");
+        return response.json();
+    },
+
+    deletePromo: async (id: string) => {
+        const response = await fetch(`${API_URL}/promos/${id}`, {
+            method: 'DELETE',
+            headers
+        });
+        if (!response.ok) throw new Error("Failed to delete promo");
+        return response.json();
     }
 };

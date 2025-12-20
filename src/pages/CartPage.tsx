@@ -26,13 +26,14 @@ const itemVariants = {
 
 export const CartPage = () => {
     const navigate = useNavigate()
-    const { items, updateQuantity, removeFromCart, getCartTotal, applyPromoCode, discount, appliedPromoCode } = useCart()
+    const { items, updateQuantity, removeFromCart, getCartTotal, applyPromoCode, discount, appliedPromoCode, applicableCategories } = useCart()
     const { user } = useUser()
     const { open, onOpen, onClose } = useDisclosure()
 
     const [promoInput, setPromoInput] = useState("")
-    const [promoError, setPromoError] = useState(false)
+    const [promoError, setPromoError] = useState<string | null>(null)
 
+    const [isApplyingPromo, setIsApplyingPromo] = useState(false)
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [deliveryFee, setDeliveryFee] = useState(0)
 
@@ -52,13 +53,16 @@ export const CartPage = () => {
     const discountAmount = (subtotal * discount) / 100
     const total = subtotal - discountAmount + deliveryFee
 
-    const handleApplyPromo = () => {
-        const success = applyPromoCode(promoInput)
-        if (success) {
-            setPromoError(false)
+    const handleApplyPromo = async () => {
+        if (!promoInput) return;
+        setIsApplyingPromo(true);
+        const result = await applyPromoCode(promoInput);
+        if (result.success) {
+            setPromoError(null);
         } else {
-            setPromoError(true)
+            setPromoError(result.message || "Invalid promo code");
         }
+        setIsApplyingPromo(false);
     }
 
     const handleCheckout = () => {
@@ -90,6 +94,7 @@ export const CartPage = () => {
                     note: item.note
                 })),
                 deliveryFee: deliveryFee,
+                promoCode: appliedPromoCode,
                 total: total,
                 status: "Pending",
                 date: new Date().toLocaleDateString('en-GB')
@@ -240,21 +245,24 @@ export const CartPage = () => {
                                             border="none"
                                         />
                                         <Button
-                                            colorPalette="red"
+                                            colorScheme="red"
                                             variant="subtle"
                                             borderRadius="xl"
                                             onClick={handleApplyPromo}
+                                            loading={isApplyingPromo}
                                         >
                                             Apply
                                         </Button>
                                     </HStack>
-                                    {promoError && <Text color="red.500" fontSize="xs" mt={1}>Invalid promo code</Text>}
+                                    {promoError && <Text color="red.500" fontSize="xs" mt={1}>{promoError}</Text>}
                                     {appliedPromoCode && (
                                         <Flex mt={2} align="center" gap={2}>
-                                            <Badge colorPalette="green" variant="subtle" borderRadius="full" px={2}>
+                                            <Badge colorScheme="green" variant="subtle" borderRadius="full" px={2}>
                                                 {appliedPromoCode} Applied
                                             </Badge>
-                                            <Text fontSize="xs" color="green.600">-{discount}% off</Text>
+                                            <Text fontSize="xs" color="green.600">
+                                                -{discount}% off {applicableCategories.length > 0 ? `on ${applicableCategories.join(', ')}` : 'items'}
+                                            </Text>
                                         </Flex>
                                     )}
                                 </Box>

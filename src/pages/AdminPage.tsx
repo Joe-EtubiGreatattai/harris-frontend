@@ -1,12 +1,13 @@
 import { Box, Flex, Text, Button, VStack, HStack, Badge, Image, IconButton, Skeleton } from "@chakra-ui/react";
 import { useState, useEffect } from "react";
-import { IoRefresh, IoAdd, IoPencil, IoTrash, IoPerson } from "react-icons/io5";
+import { IoRefresh, IoAdd, IoPencil, IoTrash, IoPerson, IoMegaphone } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
 import { api } from "../services/api";
 import { ProductModal } from "../components/admin/ProductModal";
 import { ReviewsTab } from "../components/admin/ReviewsTab";
 import { RiderModal } from "../components/admin/RiderModal";
 import { OrderDetailsView } from "../components/admin/OrderDetailsView";
+import { CampaignTab } from "../components/admin/CampaignTab";
 import { socket } from "../services/socket";
 
 export const AdminPage = () => {
@@ -14,13 +15,14 @@ export const AdminPage = () => {
     const [products, setProducts] = useState<any[]>([]);
     const [riders, setRiders] = useState<any[]>([]);
     const [ratings, setRatings] = useState<any[]>([]);
+    const [promos, setPromos] = useState<any[]>([]);
     const [settings, setSettings] = useState<any>({ deliveryFee: 0 });
     const [isLoading, setIsLoading] = useState(true);
     const [isProductModalOpen, setIsProductModalOpen] = useState(false);
     const [isRiderModalOpen, setIsRiderModalOpen] = useState(false);
     const [selectedOrder, setSelectedOrder] = useState<any>(null); // For details view
     const [editingProduct, setEditingProduct] = useState<any>(null);
-    const [activeTab, setActiveTab] = useState<'orders' | 'products' | 'riders' | 'settings' | 'reviews'>('orders');
+    const [activeTab, setActiveTab] = useState<'orders' | 'products' | 'riders' | 'settings' | 'reviews' | 'campaign'>('orders');
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -85,18 +87,20 @@ export const AdminPage = () => {
     const fetchData = async () => {
         setIsLoading(true);
         try {
-            const [ordersData, productsData, ridersData, settingsData, ratingsData] = await Promise.all([
+            const [ordersData, productsData, ridersData, settingsData, ratingsData, promosData] = await Promise.all([
                 api.getAllOrders(),
                 api.getProducts(),
                 api.getRiders(),
                 api.getSettings(),
-                api.getAllRatings()
+                api.getAllRatings(),
+                api.getAllPromos()
             ]);
             setOrders(ordersData);
             setProducts(productsData);
             setRiders(ridersData);
             setSettings(settingsData);
             setRatings(ratingsData);
+            setPromos(promosData);
         } catch (error) {
             console.error("Failed to load data");
         } finally {
@@ -320,6 +324,19 @@ export const AdminPage = () => {
                         whiteSpace="nowrap"
                     >
                         Reviews ({ratings.length})
+                    </Button>
+                    <Button
+                        variant={activeTab === 'campaign' ? 'solid' : 'ghost'}
+                        colorScheme={activeTab === 'campaign' ? 'red' : 'gray'}
+                        onClick={() => setActiveTab('campaign')}
+                        borderRadius="lg"
+                        size={{ base: "sm", md: "md" }}
+                        whiteSpace="nowrap"
+                    >
+                        <HStack gap={2}>
+                            <IoMegaphone />
+                            <Text>Campaign</Text>
+                        </HStack>
                     </Button>
                 </Flex>
             </Box>
@@ -575,6 +592,14 @@ export const AdminPage = () => {
 
                 {activeTab === 'reviews' && (
                     <ReviewsTab ratings={ratings} onViewOrder={handleViewOrder} />
+                )}
+
+                {activeTab === 'campaign' && (
+                    <CampaignTab
+                        promos={promos}
+                        categories={[...new Set(products.map(p => p.category))]}
+                        onRefresh={fetchData}
+                    />
                 )}
             </Box>
 

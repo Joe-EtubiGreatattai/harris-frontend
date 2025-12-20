@@ -3,6 +3,7 @@ import { socket } from "../services/socket";
 import type { ReactNode } from 'react';
 
 import { useUser } from "./UserContext";
+import { api } from "../services/api";
 
 export interface CartItem {
     id: string; // unique ID for cart entry (e.g. productID + timestamps or random)
@@ -25,9 +26,10 @@ interface CartContextType {
     addItemsToCart: (newItems: Omit<CartItem, 'id'>[]) => void;
     getCartTotal: () => number;
     clearCart: () => void;
-    applyPromoCode: (code: string) => boolean;
+    applyPromoCode: (code: string) => Promise<{ success: boolean; message?: string }>;
     discount: number;
     appliedPromoCode: string | null;
+    applicableCategories: string[];
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -41,6 +43,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
     const [discount, setDiscount] = useState(0);
     const [appliedPromoCode, setAppliedPromoCode] = useState<string | null>(null);
+    const [applicableCategories, setApplicableCategories] = useState<string[]>([]);
 
     useEffect(() => {
         localStorage.setItem('cart', JSON.stringify(items));
@@ -127,22 +130,19 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         socket.emit('cartCleared', { email: user?.email });
     };
 
-    const applyPromoCode = (code: string) => {
-        const upperCode = code.toUpperCase();
-        if (upperCode === 'PIZZA50') {
-            setDiscount(50);
-            setAppliedPromoCode(upperCode);
-            return true;
-        } else if (upperCode === 'WELCOME10') {
-            setDiscount(10);
-            setAppliedPromoCode(upperCode);
-            return true;
-        } else if (upperCode === 'FREEFEED') {
-            setDiscount(100);
-            setAppliedPromoCode(upperCode);
-            return true;
+    const applyPromoCode = async (code: string) => {
+        try {
+            const result = await api.validatePromo(code, items);
+            setDiscount(result.discountPercent);
+            setAppliedPromoCode(result.code);
+            setApplicableCategories(result.applicableCategories || []);
+            return { success: true };
+        } catch (error: any) {
+            setDiscount(0);
+            setAppliedPromoCode(null);
+            setApplicableCategories([]);
+            return { success: false, message: error.message };
         }
-        return false;
     };
 
     return (
@@ -156,7 +156,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
             addItemsToCart,
             applyPromoCode,
             discount,
-            appliedPromoCode
+            appliedPromoCode,
+            applicableCategories
         }}>
             {children}
         </CartContext.Provider>
