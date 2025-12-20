@@ -330,13 +330,13 @@ export const AdminPage = () => {
                     <VStack gap={4} align="stretch">
                         {orders.map((order) => (
                             <Box key={order._id} p={4} bg="white" border="1px solid" borderColor="gray.100" borderRadius="xl" shadow="sm">
-                                <Flex justify="space-between" align="start" mb={2} direction={{ base: 'column', md: 'row' }} gap={2}>
+                                <Flex justify="space-between" align={{ base: "start", md: "center" }} mb={2} direction={{ base: 'column', md: 'row' }} gap={2}>
                                     <Box>
-                                        <HStack mb={1}>
+                                        <HStack mb={1} wrap="wrap">
                                             <Text fontWeight="bold" fontSize="lg">Order #{order.orderId}</Text>
                                             <Badge colorScheme={order.status === 'Delivered' ? 'green' : 'orange'}>{order.status}</Badge>
                                         </HStack>
-                                        <Text fontSize="sm" color="gray.500">{new Date(order.createdAt).toLocaleString()} • {order.items.length} items</Text>
+                                        <Text fontSize="xs" color="gray.500">{new Date(order.createdAt).toLocaleString()} • {order.items.length} items</Text>
                                     </Box>
                                     <Text fontWeight="bold" fontSize="xl" color="red.500">₦{order.total.toLocaleString()}</Text>
                                 </Flex>
@@ -349,19 +349,26 @@ export const AdminPage = () => {
                                     ))}
                                 </VStack>
 
-                                <Flex mt={3} justify="space-between" align={{ base: "stretch", md: "center" }} direction={{ base: "column", md: "row" }} gap={4}>
-                                    <VStack align="start" gap={2}>
-                                        <Text fontSize="xs" fontWeight="bold" color="gray.600">User: {order.user.email} | {order.user.phone || "No Phone"} | {order.user.address}</Text>
-                                        <HStack w="full">
-                                            <Text fontSize="sm" minW="45px">Rider:</Text>
-                                            <Box border="1px solid" borderColor="gray.200" borderRadius="md" px={2} h="36px" display="flex" alignItems="center" flex={1} maxW={{ md: "200px" }}>
+                                <Flex mt={4} justify="space-between" align={{ base: "stretch", lg: "flex-end" }} direction={{ base: "column", lg: "row" }} gap={5}>
+                                    <VStack align="start" gap={3} flex={1}>
+                                        <Box w="full">
+                                            <Text fontSize="2xs" fontWeight="bold" color="gray.400" textTransform="uppercase" mb={1}>Customer Info</Text>
+                                            <Text fontSize="xs" fontWeight="medium" color="gray.700" mb={0.5}>{order.user.email}</Text>
+                                            <Text fontSize="xs" color="gray.500" mb={1}>{order.user.phone || "No Phone"}</Text>
+                                            <Text fontSize="xs" color="gray.500" fontStyle="italic" lineClamp={2}>{order.user.address}</Text>
+                                        </Box>
+
+                                        <HStack w="full" maxW={{ md: "250px" }}>
+                                            <Text fontSize="xs" fontWeight="bold" color="gray.400" minW="45px">RIDER:</Text>
+                                            <Box border="1px solid" borderColor="gray.200" borderRadius="md" px={2} h="36px" display="flex" alignItems="center" flex={1} bg="gray.50">
                                                 <select
                                                     style={{
-                                                        fontSize: "14px",
+                                                        fontSize: "13px",
                                                         background: "transparent",
                                                         outline: "none",
                                                         width: "100%",
-                                                        cursor: (order.status !== 'Ready for Delivery' && order.status !== 'Out for Delivery') ? 'not-allowed' : 'pointer'
+                                                        cursor: (order.status !== 'Ready for Delivery' && order.status !== 'Out for Delivery') ? 'not-allowed' : 'pointer',
+                                                        fontWeight: "500"
                                                     }}
                                                     value={order.assignedRider?._id || order.assignedRider || ""}
                                                     onChange={(e) => handleAssignRider(order.orderId, e.target.value)}
@@ -375,18 +382,18 @@ export const AdminPage = () => {
                                             </Box>
                                         </HStack>
                                     </VStack>
-                                    <HStack justify={{ base: "flex-end", md: "flex-end" }} w={{ base: "full", md: "auto" }}>
+
+                                    <Flex direction={{ base: "column", sm: "row" }} gap={2} w={{ base: "full", lg: "auto" }}>
                                         {/* Status Controls */}
                                         {order.status !== 'Delivered' && (
                                             <>
-                                                {/* Only Users can mark Delivered now. Admin can move to other states like 'Preparing', 'Out for Delivery' */}
                                                 {order.status === 'Pending' && (
-                                                    <Button size="sm" colorScheme="orange" onClick={() => handleUpdateStatus(order.orderId, "Preparing")} w={{ base: "full", md: "auto" }}>
+                                                    <Button size="sm" colorScheme="orange" onClick={() => handleUpdateStatus(order.orderId, "Preparing")} w={{ base: "full", sm: "auto" }}>
                                                         Preparing
                                                     </Button>
                                                 )}
                                                 {order.status === 'Preparing' && (
-                                                    <Button size="sm" colorScheme="blue" onClick={() => handleUpdateStatus(order.orderId, "Ready for Delivery")} w={{ base: "full", md: "auto" }}>
+                                                    <Button size="sm" colorScheme="blue" onClick={() => handleUpdateStatus(order.orderId, "Ready for Delivery")} w={{ base: "full", sm: "auto" }}>
                                                         Mark as Ready
                                                     </Button>
                                                 )}
@@ -396,23 +403,22 @@ export const AdminPage = () => {
                                                         colorScheme="red"
                                                         onClick={() => handleUpdateStatus(order.orderId, "Out for Delivery")}
                                                         disabled={!order.assignedRider}
-                                                        w={{ base: "full", md: "auto" }}
+                                                        w={{ base: "full", sm: "auto" }}
                                                     >
                                                         Dispatch
                                                     </Button>
                                                 )}
                                                 {order.status === 'Out for Delivery' && (
-                                                    <Button size="sm" variant="outline" colorScheme="green" onClick={() => handleUpdateStatus(order.orderId, "Delivered")} w={{ base: "full", md: "auto" }}>
+                                                    <Button size="sm" variant="outline" colorScheme="green" onClick={() => handleUpdateStatus(order.orderId, "Delivered")} w={{ base: "full", sm: "auto" }}>
                                                         Mark Delivered
                                                     </Button>
                                                 )}
                                             </>
                                         )}
-                                        {/* NEW: View Details Button for Orders Tab as well */}
-                                        <Button size="sm" variant="ghost" onClick={() => handleViewOrder(order.orderId)}>
+                                        <Button size="sm" variant="ghost" onClick={() => handleViewOrder(order.orderId)} w={{ base: "full", sm: "auto" }} border="1px solid" borderColor="gray.200">
                                             View Details
                                         </Button>
-                                    </HStack>
+                                    </Flex>
                                 </Flex>
                             </Box>
                         ))}
