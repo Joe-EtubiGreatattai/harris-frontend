@@ -267,6 +267,12 @@ export const api = {
         return response.json();
     },
 
+    getBalance: async () => {
+        const response = await fetch(`${API_URL}/payouts/balance`, { headers });
+        if (!response.ok) throw new Error("Failed to fetch balance");
+        return response.json();
+    },
+
     verifyAccount: async (accountNumber: string, bankCode: string) => {
         const response = await fetch(`${API_URL}/payouts/verify-account`, {
             method: 'POST',

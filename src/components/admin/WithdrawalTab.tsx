@@ -4,6 +4,7 @@ import { IoWallet, IoCheckmarkCircle, IoTime, IoCloseCircle, IoSearch } from "re
 import { api } from "../../services/api";
 
 export const WithdrawalTab = () => {
+    const [balance, setBalance] = useState<any>(null);
     const [banks, setBanks] = useState<any[]>([]);
     const [history, setHistory] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -24,12 +25,14 @@ export const WithdrawalTab = () => {
     const loadData = async () => {
         setIsLoading(true);
         try {
-            const [banksData, historyData] = await Promise.all([
+            const [banksData, historyData, balanceData] = await Promise.all([
                 api.getBanks(),
-                api.getWithdrawalHistory()
+                api.getWithdrawalHistory(),
+                api.getBalance()
             ]);
             setBanks(banksData.data);
             setHistory(historyData);
+            setBalance(balanceData.data?.[0]); // Paystack returns balance array
         } catch (error) {
             console.error("Failed to load payout data");
         } finally {
@@ -102,6 +105,35 @@ export const WithdrawalTab = () => {
 
     return (
         <VStack gap={8} align="stretch">
+            {/* Balance Overview */}
+            <Flex
+                bg="white"
+                p={6}
+                borderRadius="2xl"
+                shadow="sm"
+                border="1px solid"
+                borderColor="gray.100"
+                justify="space-between"
+                align="center"
+                bgGradient="linear(to-r, white, red.50)"
+            >
+                <HStack gap={4}>
+                    <Box p={3} bg="red.500" color="white" borderRadius="xl">
+                        <IoWallet size={32} />
+                    </Box>
+                    <VStack align="start" gap={0}>
+                        <Text color="gray.500" fontSize="sm" fontWeight="medium">Available Balance</Text>
+                        <Text fontSize="3xl" fontWeight="black" color="red.600">
+                            ₦{balance ? (balance.balance / 100).toLocaleString() : "0.00"}
+                        </Text>
+                    </VStack>
+                </HStack>
+                <VStack align="end" gap={0}>
+                    <Badge colorScheme="green" variant="subtle" borderRadius="full" px={3}>Live Account</Badge>
+                    <Text fontSize="xs" color="gray.400" mt={1}>Currency: {balance?.currency || "NGN"}</Text>
+                </VStack>
+            </Flex>
+
             {/* Withdrawal Form */}
             <Box bg="white" p={6} borderRadius="2xl" shadow="sm" border="1px solid" borderColor="gray.100">
                 <HStack mb={6} gap={3}>
