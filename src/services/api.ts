@@ -95,11 +95,11 @@ export const api = {
     },
 
     // Payment
-    initializePayment: async (email: string, amount: number) => {
+    initializePayment: async (email: string, amount: number, metadata?: any) => {
         const response = await fetch(`${API_URL}/payment/initialize`, {
             method: 'POST',
             headers,
-            body: JSON.stringify({ email, amount })
+            body: JSON.stringify({ email, amount, metadata })
         })
         return response.json()
     },

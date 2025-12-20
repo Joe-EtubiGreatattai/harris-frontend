@@ -40,25 +40,12 @@ export const PaymentCallbackPage = () => {
                     return
                 }
 
-                console.log("✅ Payment verified successfully")
+                console.log("✅ Payment verified successfully - Order should be created via Webhook")
 
-                // Check for pending order
-                const pendingOrderStr = localStorage.getItem('pendingOrder')
-                console.log("🔵 Pending order from localStorage:", pendingOrderStr)
+                // Wait a moment for webhook to finalize (optional but helpful for immediate redirect)
+                await new Promise(resolve => setTimeout(resolve, 2000))
 
-                const pendingOrder = JSON.parse(pendingOrderStr || '{}')
-
-                if (!pendingOrder || !pendingOrder.user || !pendingOrder.user.email) {
-                    console.log("❌ No pending order found or missing user email")
-                    navigate('/')
-                    return
-                }
-
-                console.log("🔵 Creating order with data:", pendingOrder)
-                const orderResult = await api.createOrder(pendingOrder)
-                console.log("✅ Order created:", orderResult)
-
-                // Refresh user context to show new active order
+                // Refresh user context to show new active order (fetched from DB)
                 console.log("🔵 Refreshing orders...")
                 refreshOrders()
 

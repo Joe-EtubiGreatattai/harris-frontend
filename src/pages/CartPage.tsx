@@ -89,10 +89,12 @@ export const CartPage = () => {
             }
 
             // 1. Initialize Payment
-            const payment = await api.initializePayment(user.email, total)
+            const payment = await api.initializePayment(user.email, total, {
+                orderData: orderData
+            })
 
             if (payment && payment.status && payment.data.authorization_url) {
-                // 2. Save pending order to local storage
+                // 2. Save pending order to local storage (as fallback/for immediate UI if needed)
                 localStorage.setItem('pendingOrder', JSON.stringify(orderData))
 
                 // 3. Redirect to Paystack
