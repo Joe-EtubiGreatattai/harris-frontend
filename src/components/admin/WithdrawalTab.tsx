@@ -116,23 +116,26 @@ export const WithdrawalTab = () => {
                     <VStack flex={1} align="stretch" gap={4}>
                         <Box>
                             <Text fontSize="sm" fontWeight="bold" color="gray.600" mb={2}>Select Bank</Text>
-                            <Box
-                                as="select"
+                            <select
                                 value={selectedBank}
-                                onChange={(e: any) => setSelectedBank(e.target.value)}
-                                h="50px"
-                                w="full"
-                                borderRadius="xl"
-                                border="1px solid"
-                                borderColor="gray.200"
-                                px={3}
-                                outline="none"
+                                onChange={(e) => setSelectedBank(e.target.value)}
+                                style={{
+                                    height: "50px",
+                                    width: "100%",
+                                    borderRadius: "12px",
+                                    border: "1px solid #E2E8F0",
+                                    paddingLeft: "12px",
+                                    paddingRight: "12px",
+                                    outline: "none",
+                                    backgroundColor: "white",
+                                    fontSize: "16px"
+                                }}
                             >
                                 <option value="">Choose your bank</option>
                                 {banks.map(bank => (
                                     <option key={bank.code} value={bank.code}>{bank.name}</option>
                                 ))}
-                            </Box>
+                            </select>
                         </Box>
 
                         <Box>
