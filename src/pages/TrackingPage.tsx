@@ -94,12 +94,90 @@ export const TrackingPage = () => {
         )
     }
 
-    // Only redirect if no active orders AND no rating is currently happening
+    // Beautiful Empty State Component
     if (activeOrders.length === 0 && !ratingOrder) {
         return (
-            <Center h="100vh" bg="#E53E3E" color="white" flexDirection="column">
-                <Text fontSize="2xl" fontWeight="bold" mb={4}>No active orders</Text>
-                <Button bg="white" color="red.500" onClick={() => navigate('/')}>Back to Menu</Button>
+            <Center h="100vh" bg="white" px={6} textAlign="center" flexDirection="column">
+                <motion.div
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ duration: 0.8, ease: "easeOut" }}
+                >
+                    <Box position="relative" mb={8}>
+                        {/* Sad Face Animation */}
+                        <motion.div
+                            animate={{
+                                y: [0, -10, 0],
+                                rotate: [-2, 2, -2]
+                            }}
+                            transition={{
+                                duration: 4,
+                                repeat: Infinity,
+                                ease: "easeInOut"
+                            }}
+                        >
+                            <Text fontSize="100px" lineHeight="1">🍕</Text>
+                            <Box
+                                position="absolute"
+                                top="45px"
+                                left="50%"
+                                transform="translateX(-50%)"
+                                bg="white"
+                                w="40px"
+                                h="10px"
+                                borderRadius="full"
+                                borderBottom="4px solid"
+                                borderColor="gray.600"
+                            />
+                        </motion.div>
+
+                        {/* Tears */}
+                        <motion.div
+                            animate={{
+                                y: [10, 40],
+                                opacity: [0, 1, 0],
+                                scale: [0.5, 1, 0.5]
+                            }}
+                            transition={{
+                                duration: 2,
+                                repeat: Infinity,
+                                ease: "linear",
+                                delay: 1
+                            }}
+                            style={{ position: 'absolute', left: '25%', top: '60%' }}
+                        >
+                            <Box bg="blue.400" w="8px" h="8px" borderRadius="full" />
+                        </motion.div>
+                    </Box>
+
+                    <Text fontSize="3xl" fontWeight="black" color="gray.800" mb={3} letterSpacing="tight">
+                        Your Active Orders are Lonely
+                    </Text>
+                    <Text color="gray.500" fontSize="lg" maxW="300px" mx="auto" mb={10} lineHeight="tall">
+                        Our ovens are hot and waiting for your next delicious choice!
+                    </Text>
+
+                    <Button
+                        size="lg"
+                        height="70px"
+                        px={12}
+                        fontSize="xl"
+                        bg="red.500"
+                        color="white"
+                        borderRadius="2xl"
+                        _hover={{ bg: "red.600", transform: "scale(1.05)" }}
+                        _active={{ transform: "scale(0.95)" }}
+                        shadow="xl"
+                        onClick={() => navigate('/')}
+                        transition="all 0.2s"
+                    >
+                        Order Something Now
+                    </Button>
+
+                    <Text mt={8} fontSize="sm" color="gray.400" fontWeight="medium" textTransform="uppercase" letterSpacing="widest">
+                        Quick Delivery Guaranteed
+                    </Text>
+                </motion.div>
             </Center>
         )
     }

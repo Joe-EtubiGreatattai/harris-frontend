@@ -136,12 +136,55 @@ export const CartPage = () => {
 
                 <Box p={6}>
                     {items.length === 0 ? (
-                        <Flex direction="column" align="center" justify="center" py={20}>
-                            <Text color="gray.400" fontSize="lg" mb={4}>Your cart is empty</Text>
-                            <Button colorScheme="red" variant="outline" onClick={() => navigate('/')}>
-                                See Menu
+                        <motion.div
+                            initial={{ y: 20, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            transition={{ duration: 0.8, ease: "easeOut" }}
+                            style={{ width: "100%", textAlign: "center", paddingTop: "60px" }}
+                        >
+                            <Box position="relative" mb={8} display="inline-block">
+                                {/* Sad Cart Animation */}
+                                <motion.div
+                                    animate={{
+                                        y: [0, -8, 0],
+                                        rotate: [-1, 1, -1]
+                                    }}
+                                    transition={{
+                                        duration: 3,
+                                        repeat: Infinity,
+                                        ease: "easeInOut"
+                                    }}
+                                >
+                                    <Text fontSize="100px" lineHeight="1">🛍️</Text>
+                                </motion.div>
+
+                                {/* Sad eyes/mouth effect using absolute positioning if needed, or just the emoji */}
+                            </Box>
+
+                            <Text fontSize="3xl" fontWeight="black" color="gray.800" mb={3} letterSpacing="tight">
+                                Your Cart feels light
+                            </Text>
+                            <Text color="gray.500" fontSize="lg" maxW="300px" mx="auto" mb={10} lineHeight="tall">
+                                Add some delicious items to make it happy again!
+                            </Text>
+
+                            <Button
+                                size="lg"
+                                height="70px"
+                                px={12}
+                                fontSize="xl"
+                                bg="red.500"
+                                color="white"
+                                borderRadius="2xl"
+                                _hover={{ bg: "red.600", transform: "scale(1.05)" }}
+                                _active={{ transform: "scale(0.95)" }}
+                                shadow="xl"
+                                onClick={() => navigate('/')}
+                                transition="all 0.2s"
+                            >
+                                Browse Menu
                             </Button>
-                        </Flex>
+                        </motion.div>
                     ) : (
                         <motion.div variants={containerVariants} initial="hidden" animate="show">
                             <AnimatePresence mode="popLayout">
