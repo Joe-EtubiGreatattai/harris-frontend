@@ -5,6 +5,7 @@ import { api } from "../../services/api";
 
 export const WithdrawalTab = () => {
     const [balance, setBalance] = useState<any>(null);
+    const [totals, setTotals] = useState<any>(null);
     const [banks, setBanks] = useState<any[]>([]);
     const [history, setHistory] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -25,14 +26,16 @@ export const WithdrawalTab = () => {
     const loadData = async () => {
         setIsLoading(true);
         try {
-            const [banksData, historyData, balanceData] = await Promise.all([
+            const [banksData, historyData, balanceData, totalsData] = await Promise.all([
                 api.getBanks(),
                 api.getWithdrawalHistory(),
-                api.getBalance()
+                api.getBalance(),
+                api.getFinancialTotals()
             ]);
             setBanks(banksData.data);
             setHistory(historyData);
             setBalance(balanceData.data?.[0]); // Paystack returns balance array
+            setTotals(totalsData.data);
         } catch (error) {
             console.error("Failed to load payout data");
         } finally {
@@ -105,33 +108,67 @@ export const WithdrawalTab = () => {
 
     return (
         <VStack gap={8} align="stretch">
-            {/* Balance Overview */}
-            <Flex
-                bg="white"
-                p={6}
-                borderRadius="2xl"
-                shadow="sm"
-                border="1px solid"
-                borderColor="gray.100"
-                justify="space-between"
-                align="center"
-                bgGradient="linear(to-r, white, red.50)"
-            >
-                <HStack gap={4}>
-                    <Box p={3} bg="red.500" color="white" borderRadius="xl">
-                        <IoWallet size={32} />
-                    </Box>
-                    <VStack align="start" gap={0}>
-                        <Text color="gray.500" fontSize="sm" fontWeight="medium">Available Balance</Text>
-                        <Text fontSize="3xl" fontWeight="black" color="red.600">
-                            ₦{balance ? (balance.balance / 100).toLocaleString() : "0.00"}
-                        </Text>
+            {/* Financial Overview Cards */}
+            <Flex direction={{ base: "column", md: "row" }} gap={6}>
+                {/* Total Revenue Card */}
+                <Flex
+                    flex={1}
+                    bg="white"
+                    p={6}
+                    borderRadius="2xl"
+                    shadow="sm"
+                    border="1px solid"
+                    borderColor="gray.100"
+                    justify="space-between"
+                    align="center"
+                    bgGradient="linear(to-r, white, green.50)"
+                >
+                    <HStack gap={4}>
+                        <Box p={3} bg="green.500" color="white" borderRadius="xl">
+                            <IoCheckmarkCircle size={32} />
+                        </Box>
+                        <VStack align="start" gap={0}>
+                            <Text color="gray.500" fontSize="sm" fontWeight="medium">Total Revenue</Text>
+                            <Text fontSize="2xl" fontWeight="black" color="green.600">
+                                ₦{totals ? (totals.total_volume / 100).toLocaleString() : "0.00"}
+                            </Text>
+                        </VStack>
+                    </HStack>
+                    <VStack align="end" gap={0}>
+                        <Badge colorScheme="green" variant="subtle" borderRadius="full" px={3}>Total Volume</Badge>
+                        <Text fontSize="2xs" color="gray.400" mt={1}>Gross Sales</Text>
                     </VStack>
-                </HStack>
-                <VStack align="end" gap={0}>
-                    <Badge colorScheme="green" variant="subtle" borderRadius="full" px={3}>Live Account</Badge>
-                    <Text fontSize="xs" color="gray.400" mt={1}>Currency: {balance?.currency || "NGN"}</Text>
-                </VStack>
+                </Flex>
+
+                {/* Withdrawable Balance Card */}
+                <Flex
+                    flex={1}
+                    bg="white"
+                    p={6}
+                    borderRadius="2xl"
+                    shadow="sm"
+                    border="1px solid"
+                    borderColor="gray.100"
+                    justify="space-between"
+                    align="center"
+                    bgGradient="linear(to-r, white, blue.50)"
+                >
+                    <HStack gap={4}>
+                        <Box p={3} bg="blue.500" color="white" borderRadius="xl">
+                            <IoWallet size={32} />
+                        </Box>
+                        <VStack align="start" gap={0}>
+                            <Text color="gray.500" fontSize="sm" fontWeight="medium">Available Balance</Text>
+                            <Text fontSize="2xl" fontWeight="black" color="blue.600">
+                                ₦{balance ? (balance.balance / 100).toLocaleString() : "0.00"}
+                            </Text>
+                        </VStack>
+                    </HStack>
+                    <VStack align="end" gap={0}>
+                        <Badge colorScheme="blue" variant="subtle" borderRadius="full" px={3}>Withdrawable</Badge>
+                        <Text fontSize="2xs" color="gray.400" mt={1}>Net Payouts</Text>
+                    </VStack>
+                </Flex>
             </Flex>
 
             {/* Withdrawal Form */}

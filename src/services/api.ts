@@ -273,6 +273,12 @@ export const api = {
         return response.json();
     },
 
+    getFinancialTotals: async () => {
+        const response = await fetch(`${API_URL}/payouts/totals`, { headers });
+        if (!response.ok) throw new Error("Failed to fetch totals");
+        return response.json();
+    },
+
     verifyAccount: async (accountNumber: string, bankCode: string) => {
         const response = await fetch(`${API_URL}/payouts/verify-account`, {
             method: 'POST',

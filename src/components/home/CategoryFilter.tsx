@@ -25,12 +25,22 @@ const ShawarmaIcon = ({ color, size }: { color: string, size?: string | number }
     <Text color={color} fontSize={size} lineHeight="1">🥙</Text>
 )
 
+const BeefIcon = ({ color, size }: { color: string, size?: string | number }) => (
+    <Text color={color} fontSize={size} lineHeight="1">🥩</Text>
+)
+
+const PastaIcon = ({ color, size }: { color: string, size?: string | number }) => (
+    <Text color={color} fontSize={size} lineHeight="1">🍝</Text>
+)
+
 const categories = [
     { id: 1, name: "Pizza", icon: PizzaIcon },
     { id: 2, name: "Burger", icon: BurgerIcon },
     { id: 3, name: "Drink", icon: DrinkIcon },
     { id: 4, name: "Chicken", icon: ChickenIcon },
     { id: 5, name: "Shawarma", icon: ShawarmaIcon },
+    { id: 6, name: "Beef", icon: BeefIcon },
+    { id: 7, name: "Pasta", icon: PastaIcon },
 ]
 
 export const CategoryFilter = ({ selectedCategory, onSelectCategory }: CategoryFilterProps) => {
