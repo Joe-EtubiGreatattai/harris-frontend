@@ -215,7 +215,7 @@ export const ProductModal = ({ isOpen, onClose, product, onSave }: ProductModalP
                                             <option value="Burger">Burger</option>
                                             <option value="Chicken">Chicken</option>
                                             <option value="Shawarma">Shawarma</option>
-                                            <option value="Drinks">Drinks</option>
+                                            <option value="Drink">Drink</option>
                                         </select>
                                     </Box>
                                 </Box>

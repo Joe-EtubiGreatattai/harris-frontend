@@ -13,24 +13,23 @@ interface PopularSectionProps {
 export const PopularSection = ({ selectedCategory, searchQuery, products }: PopularSectionProps) => {
 
     const filteredProducts = products.filter(p => {
-        const matchesCategory = p.category === selectedCategory
+        // Handle "Drink" vs "Drinks" inconsistency
+        const categoryMatch = (cat: string, target: string) => {
+            if (target === "Drink") return cat === "Drink" || cat === "Drinks";
+            return cat === target;
+        };
 
-        if (!searchQuery) return matchesCategory
+        const matchesCategory = categoryMatch(p.category, selectedCategory);
 
-        const query = searchQuery.toLowerCase()
+        if (!searchQuery) return matchesCategory;
+
+        const query = searchQuery.toLowerCase();
         const matchesSearch =
             p.name.toLowerCase().includes(query) ||
-            p.description.toLowerCase().includes(query)
+            p.description.toLowerCase().includes(query);
 
-        // If searching, we might want to search ACROSS categories or still within?
-        // Usually global search is better UX, but let's stick to category for now OR global if category is "All" (which we don't have yet)
-        // Let's do: Filter by category AND search query. 
-        // User request "make sure search works".
-        // If I search "Cheese" I expect to see it even if I'm on "Drinks" tab? 
-        // Maybe. But tabs imply filter. 
-        // Let's implement: matchesCategory && matchesSearch.
-        return matchesCategory && matchesSearch
-    })
+        return matchesCategory && matchesSearch;
+    });
 
     return (
         <Box px={6} pb={8}>
