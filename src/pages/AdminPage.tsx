@@ -1,4 +1,5 @@
 import { Box, Flex, Text, Button, VStack, HStack, Badge, Image, IconButton, Skeleton } from "@chakra-ui/react";
+import { toaster } from "../components/ui/toaster";
 import { useState, useEffect } from "react";
 import { IoRefresh, IoAdd, IoPencil, IoTrash, IoPerson, IoMegaphone, IoWallet } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
@@ -32,6 +33,16 @@ export const AdminPage = () => {
         // Socket.IO Listeners
         socket.on('newOrder', (newOrder: any) => {
             setOrders((prevOrders) => [newOrder, ...prevOrders]);
+            toaster.create({
+                title: "New Order Received!",
+                description: `Order #${newOrder.orderId} - ₦${newOrder.total.toLocaleString()}`,
+                type: "success",
+                duration: 5000,
+            });
+
+            // Play notification sound
+            const audio = new Audio('/notification.mp3'); // Assuming file exists or just skipping audio for now if uncertain
+            audio.play().catch(e => console.log("Audio play failed", e));
         });
 
         socket.on('orderUpdated', (updatedOrder: any) => {
