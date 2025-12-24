@@ -1,5 +1,7 @@
 import { Box, Container } from "@chakra-ui/react"
 import { Outlet } from "react-router-dom"
+import { FloatingCartButton } from "./FloatingCartButton"
+import { FloatingTrackerButton } from "./FloatingTrackerButton"
 
 export const MainLayout = () => {
     return (
@@ -13,6 +15,8 @@ export const MainLayout = () => {
                 position="relative"
             >
                 <Outlet />
+                <FloatingCartButton />
+                <FloatingTrackerButton />
             </Container>
         </Box>
     )

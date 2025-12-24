@@ -1,8 +1,8 @@
 import { Flex, Text, Box, Spinner } from "@chakra-ui/react"
-import { IoLocationSharp, IoTimeOutline, IoCartOutline } from "react-icons/io5"
+import { IoLocationSharp } from "react-icons/io5"
 import { useState, useEffect } from "react"
 import { useUser } from "../../context/UserContext"
-import { useCart } from "../../context/CartContext"
+
 import { useNavigate } from "react-router-dom"
 
 export const HomeHeader = () => {
@@ -11,11 +11,11 @@ export const HomeHeader = () => {
     const [error, setError] = useState<string | null>(null)
 
     // Contexts
-    const { user, setGeoAddress, hasActiveOrder, activeOrders } = useUser()
-    const { items } = useCart()
+    const { user, setGeoAddress } = useUser()
+
     const navigate = useNavigate()
 
-    const hasItemsInCart = items.length > 0;
+
 
     const fetchAddress = () => {
         setLoading(true)
@@ -102,92 +102,18 @@ export const HomeHeader = () => {
                 {error && <Text fontSize="xs" color="red.500">{error} (Tap to retry)</Text>}
             </Box>
 
-            {hasItemsInCart ? (
-                <Box
-                    w="40px"
-                    h="40px"
-                    borderRadius="full"
-                    bg="red.100"
-                    display="flex"
-                    alignItems="center"
-                    justifyContent="center"
-                    cursor="pointer"
-                    onClick={() => navigate('/cart')}
-                    border="2px solid"
-                    borderColor="red.500"
-                    position="relative"
-                    animation="bounce 1s infinite"
-                >
-                    <IoCartOutline size={24} color="#E53E3E" />
-                    <Flex
-                        position="absolute"
-                        top="-2px"
-                        right="-2px"
-                        bg="green.500"
-                        color="white"
-                        w="18px"
-                        h="18px"
-                        borderRadius="full"
-                        align="center"
-                        justify="center"
-                        fontSize="xs"
-                        fontWeight="bold"
-                        border="2px solid white"
-                    >
-                        {items.reduce((acc, item) => acc + item.quantity, 0)}
-                    </Flex>
-                </Box>
-            ) : hasActiveOrder ? (
-                <Box
-                    w="40px"
-                    h="40px"
-                    borderRadius="full"
-                    bg="red.100"
-                    display="flex"
-                    alignItems="center"
-                    justifyContent="center"
-                    cursor="pointer"
-                    onClick={() => navigate('/tracking')}
-                    border="2px solid"
-                    borderColor="red.500"
-                    animation="pulse 2s infinite"
-                    position="relative"
-                >
-                    <IoTimeOutline size={24} color="#E53E3E" />
-                    {activeOrders.length > 0 && (
-                        <Flex
-                            position="absolute"
-                            top="-2px"
-                            right="-2px"
-                            bg="red.600"
-                            color="white"
-                            w="18px"
-                            h="18px"
-                            borderRadius="full"
-                            align="center"
-                            justify="center"
-                            fontSize="xs"
-                            fontWeight="bold"
-                            border="2px solid white"
-                        >
-                            {activeOrders.length}
-                        </Flex>
-                    )}
-                </Box>
-            ) : (
-                <Box
-                    w="40px"
-                    h="40px"
-                    borderRadius="full"
-                    overflow="hidden"
-                    border="2px solid"
-                    borderColor="gray.100"
-                    cursor="pointer"
-                    onClick={() => navigate('/profile')}
-                >
-                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="User" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                </Box>
-            )}
+            <Box
+                w="40px"
+                h="40px"
+                borderRadius="full"
+                overflow="hidden"
+                border="2px solid"
+                borderColor="gray.100"
+                cursor="pointer"
+                onClick={() => navigate('/profile')}
+            >
+                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="User" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            </Box>
         </Flex>
     )
 }
