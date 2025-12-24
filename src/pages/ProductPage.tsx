@@ -81,7 +81,16 @@ export const ProductPage = () => {
     const calculateTotal = () => {
         if (!product || !selectedSize) return 0;
         let basePrice = product.prices[selectedSize] || 0;
-        let extrasPrice = selectedExtras.length * 500 // ₦500 per extra
+
+        // Calculate total price of selected extras
+        let extrasPrice = 0;
+        if (product.extras) {
+            extrasPrice = selectedExtras.reduce((total, extraName) => {
+                const extra = product.extras.find((e: any) => e.name === extraName);
+                return total + (extra?.price || 0);
+            }, 0);
+        }
+
         return (basePrice + extrasPrice)
     }
 
