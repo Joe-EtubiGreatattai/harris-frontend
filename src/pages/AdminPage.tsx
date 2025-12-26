@@ -572,7 +572,11 @@ export const AdminPage = () => {
                                 </Flex>
                             </Box>
                         ))}
-                        {orders.length === 0 && <Text color="gray.500">No orders found.</Text>}
+                        {filteredOrders.length === 0 && (
+                            <Text color="gray.500" textAlign="center" py={10}>
+                                {searchQuery ? `No orders matching "${searchQuery}"` : "No paid orders found."}
+                            </Text>
+                        )}
                     </VStack>
                 )}
 
