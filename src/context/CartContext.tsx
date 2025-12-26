@@ -32,6 +32,9 @@ interface CartContextType {
     applicableCategories: string[];
     deliveryFee: number;
     isOpen: boolean;
+    openingTime: string;
+    closingTime: string;
+    isWithinHours: boolean;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -48,10 +51,19 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     const [applicableCategories, setApplicableCategories] = useState<string[]>([]);
     const [deliveryFee, setDeliveryFee] = useState(0);
     const [isOpen, setIsOpen] = useState(true);
+    const [openingTime, setOpeningTime] = useState("08:00");
+    const [closingTime, setClosingTime] = useState("22:00");
+    const [isWithinHours, setIsWithinHours] = useState(true);
 
     useEffect(() => {
         localStorage.setItem('cart', JSON.stringify(items));
     }, [items]);
+
+    const checkHours = (open: string, close: string) => {
+        const now = new Date();
+        const currentTimeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        return currentTimeStr >= open && currentTimeStr <= close;
+    };
 
     useEffect(() => {
         const fetchSettings = async () => {
@@ -59,12 +71,21 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
                 const settings = await api.getSettings();
                 setDeliveryFee(settings.deliveryFee || 0);
                 setIsOpen(settings.isOpen !== false);
+                setOpeningTime(settings.openingTime || "08:00");
+                setClosingTime(settings.closingTime || "22:00");
+                setIsWithinHours(checkHours(settings.openingTime || "08:00", settings.closingTime || "22:00"));
             } catch (err) {
                 console.error("Failed to fetch settings", err);
             }
         };
         fetchSettings();
-    }, []);
+
+        // Refresh check every minute
+        const timer = setInterval(() => {
+            setIsWithinHours(checkHours(openingTime, closingTime));
+        }, 60000);
+        return () => clearInterval(timer);
+    }, [openingTime, closingTime]);
 
     useEffect(() => {
         const handleCartUpdate = (updatedItems: CartItem[]) => {
@@ -93,6 +114,9 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         const handleSettingsUpdated = (newSettings: any) => {
             setDeliveryFee(newSettings.deliveryFee || 0);
             setIsOpen(newSettings.isOpen !== false);
+            setOpeningTime(newSettings.openingTime || "08:00");
+            setClosingTime(newSettings.closingTime || "22:00");
+            setIsWithinHours(checkHours(newSettings.openingTime || "08:00", newSettings.closingTime || "22:00"));
         };
 
         socket.on('cartUpdated', handleCartUpdate);
@@ -183,7 +207,10 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
             appliedPromoCode,
             applicableCategories,
             deliveryFee,
-            isOpen
+            isOpen,
+            openingTime,
+            closingTime,
+            isWithinHours
         }}>
             {children}
         </CartContext.Provider>

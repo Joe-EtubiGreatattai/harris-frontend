@@ -26,9 +26,11 @@ const itemVariants = {
 
 export const CartPage = () => {
     const navigate = useNavigate()
-    const { items, updateQuantity, removeFromCart, getCartTotal, applyPromoCode, discount, appliedPromoCode, applicableCategories, deliveryFee, isOpen } = useCart()
+    const { items, updateQuantity, removeFromCart, getCartTotal, applyPromoCode, discount, appliedPromoCode, applicableCategories, deliveryFee, isOpen, isWithinHours, openingTime, closingTime } = useCart()
     const { user } = useUser()
     const { open, onOpen, onClose } = useDisclosure()
+
+    const isStoreOpen = isOpen && isWithinHours
 
     const [promoInput, setPromoInput] = useState("")
     const [promoError, setPromoError] = useState<string | null>(null)
@@ -297,31 +299,37 @@ export const CartPage = () => {
                                     <Text fontWeight="bold" fontSize="2xl" color="gray.800">₦{total.toLocaleString()}</Text>
                                 </Flex>
 
-                                {!isOpen && (
+                                {!isStoreOpen && (
                                     <Box bg="red.50" p={4} borderRadius="xl" border="1px solid" borderColor="red.100" mb={6}>
                                         <Flex gap={3} align="center">
                                             <Text fontSize="2xl">😴</Text>
                                             <Box>
-                                                <Text fontWeight="bold" color="red.700">We are currently closed</Text>
-                                                <Text fontSize="xs" color="red.600">You can still browse our menu, but ordering is disabled until we reopen.</Text>
+                                                <Text fontWeight="bold" color="red.700">
+                                                    {!isOpen ? "We are currently closed" : "Outside opening hours"}
+                                                </Text>
+                                                <Text fontSize="xs" color="red.600">
+                                                    {!isOpen
+                                                        ? "You can still browse our menu, but ordering is disabled until we reopen."
+                                                        : `Ordering is disabled. Our opening hours are ${openingTime} to ${closingTime}.`}
+                                                </Text>
                                             </Box>
                                         </Flex>
                                     </Box>
                                 )}
 
                                 <Button
-                                    bg={isOpen ? "black" : "gray.400"}
+                                    bg={isStoreOpen ? "black" : "gray.400"}
                                     color="white"
                                     w="full"
                                     size="lg"
                                     borderRadius="xl"
                                     py={7}
                                     fontSize="lg"
-                                    _hover={isOpen ? { bg: "gray.800" } : {}}
+                                    _hover={isStoreOpen ? { bg: "gray.800" } : {}}
                                     onClick={handleCheckout}
-                                    disabled={!isOpen}
+                                    disabled={!isStoreOpen}
                                 >
-                                    {isOpen ? "Checkout" : "Currently Closed"}
+                                    {isStoreOpen ? "Checkout" : "Currently Closed"}
                                 </Button>
                             </Box>
                         </motion.div>

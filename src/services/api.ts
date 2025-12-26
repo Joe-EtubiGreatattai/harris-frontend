@@ -350,5 +350,28 @@ export const api = {
         const response = await fetch(`${API_URL}/payouts/history`, { headers });
         if (!response.ok) throw new Error("Failed to fetch history");
         return response.json();
+    },
+
+    // Users
+    getUsers: async () => {
+        const response = await fetch(`${API_URL}/users`, { headers });
+        if (!response.ok) throw new Error("Failed to fetch users");
+        return response.json();
+    },
+
+    getUserOrders: async (email: string) => {
+        const response = await fetch(`${API_URL}/users/${email}/orders`, { headers });
+        if (!response.ok) throw new Error("Failed to fetch user orders");
+        return response.json();
+    },
+
+    sendEmail: async (data: { email: string, subject: string, message: string }) => {
+        const response = await fetch(`${API_URL}/users/send-email`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(data)
+        });
+        if (!response.ok) throw new Error("Failed to send email");
+        return response.json();
     }
 };

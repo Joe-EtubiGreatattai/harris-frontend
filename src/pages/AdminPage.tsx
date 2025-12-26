@@ -1,7 +1,7 @@
 import { Box, Flex, Text, Button, VStack, HStack, Badge, Image, IconButton, Skeleton, Input } from "@chakra-ui/react";
 import { toaster } from "../components/ui/toaster";
 import { useState, useEffect } from "react";
-import { IoRefresh, IoAdd, IoPencil, IoTrash, IoPerson, IoMegaphone, IoWallet, IoSearch } from "react-icons/io5";
+import { IoRefresh, IoAdd, IoPencil, IoTrash, IoPerson, IoMegaphone, IoWallet, IoSearch, IoPeople } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
 import { api } from "../services/api";
 import { ProductModal } from "../components/admin/ProductModal";
@@ -11,6 +11,7 @@ import { OrderDetailsView } from "../components/admin/OrderDetailsView";
 import { CampaignTab } from "../components/admin/CampaignTab";
 import { WithdrawalTab } from "../components/admin/WithdrawalTab";
 import { TransactionsTab } from "../components/admin/TransactionsTab";
+import { UsersTab } from "../components/admin/UsersTab";
 import { socket } from "../services/socket";
 
 export const AdminPage = () => {
@@ -26,7 +27,7 @@ export const AdminPage = () => {
     const [selectedOrder, setSelectedOrder] = useState<any>(null); // For details view
     const [editingProduct, setEditingProduct] = useState<any>(null);
     const [searchQuery, setSearchQuery] = useState("");
-    const [activeTab, setActiveTab] = useState<'orders' | 'products' | 'riders' | 'settings' | 'reviews' | 'campaign' | 'withdrawals' | 'transactions'>('orders');
+    const [activeTab, setActiveTab] = useState<'orders' | 'products' | 'riders' | 'users' | 'settings' | 'reviews' | 'campaign' | 'withdrawals' | 'transactions'>('orders');
     const navigate = useNavigate();
 
     // Derived state: Filter out Pending Payment orders from Admin view
@@ -395,6 +396,19 @@ export const AdminPage = () => {
                         Riders ({riders.length})
                     </Button>
                     <Button
+                        variant={activeTab === 'users' ? 'solid' : 'ghost'}
+                        colorScheme={activeTab === 'users' ? 'red' : 'gray'}
+                        onClick={() => setActiveTab('users')}
+                        borderRadius="lg"
+                        size={{ base: "sm", md: "md" }}
+                        whiteSpace="nowrap"
+                    >
+                        <HStack gap={2}>
+                            <IoPeople />
+                            <Text>Users</Text>
+                        </HStack>
+                    </Button>
+                    <Button
                         variant={activeTab === 'settings' ? 'solid' : 'ghost'}
                         colorScheme={activeTab === 'settings' ? 'red' : 'gray'}
                         onClick={() => setActiveTab('settings')}
@@ -603,69 +617,83 @@ export const AdminPage = () => {
                             <IoAdd /> Add New Product
                         </Button>
 
-                        <Flex wrap="wrap" gap={4}>
-                            {products.map((product) => (
-                                <Box key={product._id} w={{ base: "full", sm: "calc(50% - 8px)", lg: "250px" }} bg="white" border="1px solid" borderColor="gray.100" borderRadius="xl" overflow="hidden" shadow="sm">
-                                    <Box position="relative">
-                                        <Image src={product.image} h={{ base: "180px", md: "150px" }} w="full" objectFit="cover" opacity={product.isAvailable ? 1 : 0.5} />
-                                        {!product.isAvailable && (
-                                            <Badge
-                                                position="absolute"
-                                                top={2}
-                                                right={2}
-                                                colorScheme="red"
-                                                variant="solid"
-                                            >
-                                                Unavailable
-                                            </Badge>
-                                        )}
-                                    </Box>
-                                    <Box p={4}>
-                                        <HStack justify="space-between" mb={2}>
-                                            <HStack gap={2}>
-                                                <Badge>{product.category}</Badge>
-                                                <Badge colorScheme="blue" variant="outline" fontSize="9px">{product.salesCount || 0} sales</Badge>
-                                            </HStack>
-                                            <Text fontWeight="bold" color="red.500">
-                                                {typeof product.prices === 'object' && Object.keys(product.prices).length > 0 ? (
-                                                    <>
-                                                        {Object.keys(product.prices).length > 1 && <Text as="span" fontSize="2xs" color="gray.400" mr={1}>Starting at</Text>}
-                                                        ₦{Math.min(...Object.values(product.prices) as number[]).toLocaleString()}
-                                                    </>
-                                                ) : (
-                                                    `₦${product.price || 0}`
+                        {/* Grouped Products */}
+                        {Object.entries(
+                            products.reduce((acc: any, product) => {
+                                const cat = product.category || 'Uncategorized';
+                                if (!acc[cat]) acc[cat] = [];
+                                acc[cat].push(product);
+                                return acc;
+                            }, {})
+                        ).map(([category, catProducts]: [string, any]) => (
+                            <Box key={category} mb={10}>
+                                <Text fontSize="xl" fontWeight="bold" mb={4} color="gray.700" borderBottom="2px solid" borderColor="red.100" pb={2} width="fit-content">
+                                    {category}
+                                </Text>
+                                <Flex wrap="wrap" gap={4}>
+                                    {catProducts.map((product: any) => (
+                                        <Box key={product._id} w={{ base: "full", sm: "calc(50% - 8px)", lg: "250px" }} bg="white" border="1px solid" borderColor="gray.100" borderRadius="xl" overflow="hidden" shadow="sm">
+                                            <Box position="relative">
+                                                <Image src={product.image} h={{ base: "180px", md: "150px" }} w="full" objectFit="cover" opacity={product.isAvailable ? 1 : 0.5} />
+                                                {!product.isAvailable && (
+                                                    <Badge
+                                                        position="absolute"
+                                                        top={2}
+                                                        right={2}
+                                                        colorScheme="red"
+                                                        variant="solid"
+                                                    >
+                                                        Unavailable
+                                                    </Badge>
                                                 )}
-                                            </Text>
-                                        </HStack>
-                                        <Text fontWeight="bold" mb={1} truncate>{product.name}</Text>
-                                        <Text fontSize="xs" color="gray.500" mb={4} lineClamp={2}>{product.description}</Text>
-
-                                        <VStack align="stretch" gap={3} mt={2}>
-                                            <Flex justify="space-between" align="center">
-                                                <HStack gap={2}>
-                                                    <Button size="sm" onClick={() => openEditModal(product)} p={2}>
-                                                        <IoPencil />
-                                                    </Button>
-                                                    <Button size="sm" colorScheme="red" variant="ghost" onClick={() => handleDeleteProduct(product.id)} p={2}>
-                                                        <IoTrash />
-                                                    </Button>
+                                            </Box>
+                                            <Box p={4}>
+                                                <HStack justify="space-between" mb={2}>
+                                                    <HStack gap={2}>
+                                                        <Badge colorScheme="blue" variant="outline" fontSize="9px">{product.salesCount || 0} sales</Badge>
+                                                    </HStack>
+                                                    <Text fontWeight="bold" color="red.500">
+                                                        {typeof product.prices === 'object' && Object.keys(product.prices).length > 0 ? (
+                                                            <>
+                                                                {Object.keys(product.prices).length > 1 && <Text as="span" fontSize="2xs" color="gray.400" mr={1}>Starting at</Text>}
+                                                                ₦{Math.min(...Object.values(product.prices) as number[]).toLocaleString()}
+                                                            </>
+                                                        ) : (
+                                                            `₦${product.price || 0}`
+                                                        )}
+                                                    </Text>
                                                 </HStack>
-                                                <Button
-                                                    size="xs"
-                                                    colorScheme={product.isAvailable !== false ? "red" : "green"}
-                                                    variant="ghost"
-                                                    onClick={() => handleSaveProduct({ ...product, isAvailable: !product.isAvailable })}
-                                                    fontWeight="bold"
-                                                    px={2}
-                                                >
-                                                    {product.isAvailable !== false ? "Mark as Unavailable" : "Mark as Available"}
-                                                </Button>
-                                            </Flex>
-                                        </VStack>
-                                    </Box>
-                                </Box>
-                            ))}
-                        </Flex>
+                                                <Text fontWeight="bold" mb={1} truncate>{product.name}</Text>
+                                                <Text fontSize="xs" color="gray.500" mb={4} lineClamp={2}>{product.description}</Text>
+
+                                                <VStack align="stretch" gap={3} mt={2}>
+                                                    <Flex justify="space-between" align="center">
+                                                        <HStack gap={2}>
+                                                            <Button size="sm" onClick={() => openEditModal(product)} p={2}>
+                                                                <IoPencil />
+                                                            </Button>
+                                                            <Button size="sm" colorScheme="red" variant="ghost" onClick={() => handleDeleteProduct(product.id)} p={2}>
+                                                                <IoTrash />
+                                                            </Button>
+                                                        </HStack>
+                                                        <Button
+                                                            size="xs"
+                                                            colorScheme={product.isAvailable !== false ? "red" : "green"}
+                                                            variant="ghost"
+                                                            onClick={() => handleSaveProduct({ ...product, isAvailable: !product.isAvailable })}
+                                                            fontWeight="bold"
+                                                            px={2}
+                                                        >
+                                                            {product.isAvailable !== false ? "Mark as Unavailable" : "Mark as Available"}
+                                                        </Button>
+                                                    </Flex>
+                                                </VStack>
+                                            </Box>
+                                        </Box>
+                                    ))}
+                                </Flex>
+                            </Box>
+                        ))}
                     </Box>
                 )}
 
@@ -721,10 +749,14 @@ export const AdminPage = () => {
                     </Box>
                 )}
 
+                {activeTab === 'users' && (
+                    <UsersTab />
+                )}
+
                 {activeTab === 'settings' && (
                     <Box maxW="500px" bg="white" p={6} borderRadius="xl" shadow="sm">
                         <Text fontSize="xl" fontWeight="bold" mb={6}>Global Settings</Text>
-                        <VStack as="form" gap={4} align="stretch" onSubmit={handleUpdateSettings}>
+                        <VStack as="form" gap={6} align="stretch" onSubmit={handleUpdateSettings}>
                             <Box borderBottom="1px solid" borderColor="gray.100" pb={4}>
                                 <Text fontWeight="bold" mb={2}>Store Status</Text>
                                 <HStack gap={4}>
@@ -751,6 +783,33 @@ export const AdminPage = () => {
                                 </HStack>
                                 <Text fontSize="xs" color="gray.500" mt={2}>
                                     Closing the store will prevent customers from placing new orders.
+                                </Text>
+                            </Box>
+
+                            <Box borderBottom="1px solid" borderColor="gray.100" pb={4}>
+                                <Text fontWeight="bold" mb={4}>Opening Hours</Text>
+                                <Flex gap={4}>
+                                    <Box flex={1}>
+                                        <Text fontSize="xs" color="gray.500" mb={1}>Opening Time</Text>
+                                        <Input
+                                            type="time"
+                                            value={settings.openingTime || "08:00"}
+                                            onChange={(e) => setSettings({ ...settings, openingTime: e.target.value })}
+                                            borderRadius="lg"
+                                        />
+                                    </Box>
+                                    <Box flex={1}>
+                                        <Text fontSize="xs" color="gray.500" mb={1}>Closing Time</Text>
+                                        <Input
+                                            type="time"
+                                            value={settings.closingTime || "22:00"}
+                                            onChange={(e) => setSettings({ ...settings, closingTime: e.target.value })}
+                                            borderRadius="lg"
+                                        />
+                                    </Box>
+                                </Flex>
+                                <Text fontSize="xs" color="gray.500" mt={2}>
+                                    Store will automatically show as closed outside these hours.
                                 </Text>
                             </Box>
 

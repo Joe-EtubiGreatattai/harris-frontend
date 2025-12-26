@@ -38,7 +38,7 @@ export const HomePage = () => {
         return saved ? JSON.parse(saved) : []
     })
     const [loading, setLoading] = useState(products.length === 0)
-    const { applyPromoCode, appliedPromoCode, isOpen } = useCart()
+    const { applyPromoCode, appliedPromoCode, isOpen, isWithinHours, openingTime, closingTime } = useCart()
     const [searchParams] = useSearchParams()
 
     useEffect(() => {
@@ -135,9 +135,13 @@ export const HomePage = () => {
             transition={{ duration: 0.3 }}
         >
             <Box pb={20}>
-                {!isOpen && (
+                {(!isOpen || !isWithinHours) && (
                     <Box bg="red.500" py={2} px={4} textAlign="center" color="white" fontWeight="bold" fontSize="sm">
-                        <Text>We are currently closed. You can still browse but checkout is disabled. 😴</Text>
+                        <Text>
+                            {!isOpen
+                                ? "We are currently closed. You can still browse but checkout is disabled. 😴"
+                                : `We are currently closed. Our opening hours are ${openingTime} to ${closingTime}. 😴`}
+                        </Text>
                     </Box>
                 )}
                 <HomeHeader />
