@@ -81,7 +81,7 @@ import { RatingModal } from "../components/tracking/RatingModal"
 
 export const TrackingPage = () => {
     const navigate = useNavigate()
-    const { user, activeOrders, completeOrder, isLoadingOrders, updateUser } = useUser()
+    const { user, activeOrders, completeOrder, isLoadingOrders, updateUser, updateLocalOrder } = useUser()
     const [showConfirm, setShowConfirm] = useState<Order | null>(null)
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
     const [ratingOrder, setRatingOrder] = useState<string | null>(null)
@@ -156,7 +156,15 @@ export const TrackingPage = () => {
         if (!phonePromptOrder || !newPhone) return
         setIsUpdatingPhone(true)
         try {
-            await api.updateOrderPhone(phonePromptOrder.id, newPhone)
+            const updatedOrder = await api.updateOrderPhone(phonePromptOrder.id, newPhone)
+
+            // Format for local state (UserContext expects formatted Order)
+            const formatted: any = {
+                ...updatedOrder,
+                id: updatedOrder.orderId || updatedOrder._id,
+                user: updatedOrder.user // Ensure nested user object is preserved
+            }
+            updateLocalOrder(formatted)
 
             // Sync with global user profile
             if (user) {
