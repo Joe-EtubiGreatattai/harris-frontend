@@ -97,7 +97,7 @@ export const CartPage = () => {
                 estimatedTotalPrepTime: estimatedTotalPrepTime,
                 promoCode: appliedPromoCode,
                 total: finalTotal,
-                status: "Pending",
+                status: "Pending Payment",
                 date: new Date().toLocaleDateString('en-GB')
             }
 
