@@ -1,7 +1,7 @@
-import { Box, Flex, Text, Button, VStack, HStack, Badge, Image, IconButton, Skeleton } from "@chakra-ui/react";
+import { Box, Flex, Text, Button, VStack, HStack, Badge, Image, IconButton, Skeleton, Input } from "@chakra-ui/react";
 import { toaster } from "../components/ui/toaster";
 import { useState, useEffect } from "react";
-import { IoRefresh, IoAdd, IoPencil, IoTrash, IoPerson, IoMegaphone, IoWallet } from "react-icons/io5";
+import { IoRefresh, IoAdd, IoPencil, IoTrash, IoPerson, IoMegaphone, IoWallet, IoSearch } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
 import { api } from "../services/api";
 import { ProductModal } from "../components/admin/ProductModal";
@@ -24,8 +24,25 @@ export const AdminPage = () => {
     const [isRiderModalOpen, setIsRiderModalOpen] = useState(false);
     const [selectedOrder, setSelectedOrder] = useState<any>(null); // For details view
     const [editingProduct, setEditingProduct] = useState<any>(null);
+    const [searchQuery, setSearchQuery] = useState("");
     const [activeTab, setActiveTab] = useState<'orders' | 'products' | 'riders' | 'settings' | 'reviews' | 'campaign' | 'withdrawals'>('orders');
     const navigate = useNavigate();
+
+    // Derived state: Filter out Pending Payment orders from Admin view
+    const paidOrders = orders.filter(o => o.status !== 'Pending Payment');
+
+    // Filter by search query
+    const filteredOrders = paidOrders.filter(order => {
+        const query = searchQuery.toLowerCase();
+        const customer = order.user || {};
+        return (
+            order.orderId?.toLowerCase().includes(query) ||
+            customer.email?.toLowerCase().includes(query) ||
+            customer.address?.toLowerCase().includes(query) ||
+            (order.date && order.date.toLowerCase().includes(query)) ||
+            new Date(order.createdAt).toLocaleDateString().toLowerCase().includes(query)
+        );
+    });
 
     useEffect(() => {
         fetchData();
@@ -348,7 +365,7 @@ export const AdminPage = () => {
                         size={{ base: "sm", md: "md" }}
                         whiteSpace="nowrap"
                     >
-                        Orders ({orders.length})
+                        Orders ({paidOrders.length})
                     </Button>
                     <Button
                         variant={activeTab === 'products' ? 'solid' : 'ghost'}
@@ -423,7 +440,27 @@ export const AdminPage = () => {
             <Box>
                 {activeTab === 'orders' && (
                     <VStack gap={4} align="stretch">
-                        {orders.map((order) => (
+                        <Box mb={4} position="relative" maxW="400px">
+                            <Box position="absolute" left={3} top="50%" transform="translateY(-50%)" zIndex={1} color="gray.400">
+                                <IoSearch size={18} />
+                            </Box>
+                            <Input
+                                placeholder="Search orders..."
+                                pl={10}
+                                h="40px"
+                                bg="white"
+                                borderRadius="lg"
+                                shadow="sm"
+                                border="1px solid"
+                                borderColor="gray.100"
+                                _focus={{ borderColor: "red.500", shadow: "md" }}
+                                fontSize="sm"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                            />
+                        </Box>
+
+                        {filteredOrders.map((order) => (
                             <Box key={order._id} p={4} bg="white" border="1px solid" borderColor="gray.100" borderRadius="xl" shadow="sm">
                                 <Flex justify="space-between" align={{ base: "start", md: "center" }} mb={2} direction={{ base: 'column', md: 'row' }} gap={2}>
                                     <Box>

@@ -25,7 +25,7 @@ export interface Order {
     total: number;
     deliveryFee: number;
     deliveryMethod: 'Delivery' | 'Pick-up';
-    status: "Delivered" | "Pending" | "Preparing" | "Ready for Delivery" | "Out for Delivery";
+    status: "Delivered" | "Pending" | "Preparing" | "Ready for Delivery" | "Out for Delivery" | "Pending Payment";
     assignedRider?: {
         _id: string;
         name: string;
@@ -76,7 +76,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     const [isLoadingOrders, setIsLoadingOrders] = useState(true);
 
     // Derived state for active orders
-    const activeOrders = orderHistory.filter(o => o.status !== 'Delivered');
+    const activeOrders = orderHistory.filter(o => o.status !== 'Delivered' && o.status !== 'Pending Payment');
     const hasActiveOrder = activeOrders.length > 0;
 
     const refreshOrders = useCallback(async () => {

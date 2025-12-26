@@ -101,16 +101,23 @@ export const CartPage = () => {
                 date: new Date().toLocaleDateString('en-GB')
             }
 
-            // 1. Initialize Payment
+            // 1. Create Order (Pending Payment status as default)
+            const createdOrder = await api.createOrder(orderData)
+
+            if (!createdOrder || !createdOrder.orderId) {
+                throw new Error("Failed to create pending order")
+            }
+
+            // 2. Initialize Payment with just the orderId in metadata (minimal)
             const payment = await api.initializePayment(user.email, finalTotal, {
-                orderData: orderData
+                orderData: { orderId: createdOrder.orderId }
             })
 
             if (payment && payment.status && payment.data.authorization_url) {
-                // 2. Save pending order to local storage (as fallback/for immediate UI if needed)
-                localStorage.setItem('pendingOrder', JSON.stringify(orderData))
+                // 3. Clear local pending order (optional, since DB has it now)
+                localStorage.removeItem('pendingOrder')
 
-                // 3. Redirect to Paystack
+                // 4. Redirect to Paystack
                 window.location.href = payment.data.authorization_url
             } else {
                 alert("Failed to initialize payment")
