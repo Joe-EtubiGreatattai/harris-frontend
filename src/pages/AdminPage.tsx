@@ -10,6 +10,7 @@ import { RiderModal } from "../components/admin/RiderModal";
 import { OrderDetailsView } from "../components/admin/OrderDetailsView";
 import { CampaignTab } from "../components/admin/CampaignTab";
 import { WithdrawalTab } from "../components/admin/WithdrawalTab";
+import { TransactionsTab } from "../components/admin/TransactionsTab";
 import { socket } from "../services/socket";
 
 export const AdminPage = () => {
@@ -25,7 +26,7 @@ export const AdminPage = () => {
     const [selectedOrder, setSelectedOrder] = useState<any>(null); // For details view
     const [editingProduct, setEditingProduct] = useState<any>(null);
     const [searchQuery, setSearchQuery] = useState("");
-    const [activeTab, setActiveTab] = useState<'orders' | 'products' | 'riders' | 'settings' | 'reviews' | 'campaign' | 'withdrawals'>('orders');
+    const [activeTab, setActiveTab] = useState<'orders' | 'products' | 'riders' | 'settings' | 'reviews' | 'campaign' | 'withdrawals' | 'transactions'>('orders');
     const navigate = useNavigate();
 
     // Derived state: Filter out Pending Payment orders from Admin view
@@ -263,11 +264,17 @@ export const AdminPage = () => {
         }
     };
 
-    const handleUpdateSettings = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleUpdateSettings = async (e?: React.FormEvent, manualData?: any) => {
+        if (e) e.preventDefault();
+        const dataToSave = manualData || settings;
         try {
-            await api.updateSettings(settings);
-            alert("Settings updated successfully");
+            await api.updateSettings(dataToSave);
+            toaster.create({
+                title: "Success",
+                description: "Settings updated successfully",
+                type: "success"
+            });
+            if (manualData) setSettings(manualData);
         } catch (error) {
             alert("Failed to update settings");
         }
@@ -432,6 +439,16 @@ export const AdminPage = () => {
                             <IoWallet />
                             <Text>Withdrawals</Text>
                         </HStack>
+                    </Button>
+                    <Button
+                        variant={activeTab === 'transactions' ? 'solid' : 'ghost'}
+                        colorScheme={activeTab === 'transactions' ? 'red' : 'gray'}
+                        onClick={() => setActiveTab('transactions')}
+                        borderRadius="lg"
+                        size={{ base: "sm", md: "md" }}
+                        whiteSpace="nowrap"
+                    >
+                        Transactions
                     </Button>
                 </Flex>
             </Box>
@@ -708,6 +725,35 @@ export const AdminPage = () => {
                     <Box maxW="500px" bg="white" p={6} borderRadius="xl" shadow="sm">
                         <Text fontSize="xl" fontWeight="bold" mb={6}>Global Settings</Text>
                         <VStack as="form" gap={4} align="stretch" onSubmit={handleUpdateSettings}>
+                            <Box borderBottom="1px solid" borderColor="gray.100" pb={4}>
+                                <Text fontWeight="bold" mb={2}>Store Status</Text>
+                                <HStack gap={4}>
+                                    <Badge
+                                        colorPalette={settings.isOpen !== false ? "green" : "red"}
+                                        variant="solid"
+                                        px={3}
+                                        py={1}
+                                        borderRadius="full"
+                                        fontSize="sm"
+                                    >
+                                        {settings.isOpen !== false ? "OPEN" : "CLOSED"}
+                                    </Badge>
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => {
+                                            const newStatus = settings.isOpen === false ? true : false;
+                                            handleUpdateSettings({ preventDefault: () => { } } as any, { ...settings, isOpen: newStatus });
+                                        }}
+                                    >
+                                        Switch to {settings.isOpen !== false ? "Closed" : "Open"}
+                                    </Button>
+                                </HStack>
+                                <Text fontSize="xs" color="gray.500" mt={2}>
+                                    Closing the store will prevent customers from placing new orders.
+                                </Text>
+                            </Box>
+
                             <Box>
                                 <Text fontWeight="bold" mb={2}>Delivery Fee (₦)</Text>
                                 <Box border="1px solid" borderColor="gray.200" borderRadius="md" px={3} h="45px" display="flex" alignItems="center">
@@ -741,6 +787,10 @@ export const AdminPage = () => {
 
                 {activeTab === 'withdrawals' && (
                     <WithdrawalTab />
+                )}
+
+                {activeTab === 'transactions' && (
+                    <TransactionsTab />
                 )}
             </Box>
 

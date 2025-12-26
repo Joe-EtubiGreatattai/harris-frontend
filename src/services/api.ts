@@ -140,6 +140,12 @@ export const api = {
         return response.json()
     },
 
+    getTransactions: async () => {
+        const response = await fetch(`${API_URL}/payment/transactions`, { headers });
+        if (!response.ok) throw new Error("Failed to fetch transactions");
+        return response.json();
+    },
+
     // Riders
     getRiders: async () => {
         const response = await fetch(`${API_URL}/riders`, { headers });

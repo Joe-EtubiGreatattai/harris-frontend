@@ -31,6 +31,7 @@ interface CartContextType {
     appliedPromoCode: string | null;
     applicableCategories: string[];
     deliveryFee: number;
+    isOpen: boolean;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -46,6 +47,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     const [appliedPromoCode, setAppliedPromoCode] = useState<string | null>(null);
     const [applicableCategories, setApplicableCategories] = useState<string[]>([]);
     const [deliveryFee, setDeliveryFee] = useState(0);
+    const [isOpen, setIsOpen] = useState(true);
 
     useEffect(() => {
         localStorage.setItem('cart', JSON.stringify(items));
@@ -56,6 +58,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
             try {
                 const settings = await api.getSettings();
                 setDeliveryFee(settings.deliveryFee || 0);
+                setIsOpen(settings.isOpen !== false);
             } catch (err) {
                 console.error("Failed to fetch settings", err);
             }
@@ -89,6 +92,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
         const handleSettingsUpdated = (newSettings: any) => {
             setDeliveryFee(newSettings.deliveryFee || 0);
+            setIsOpen(newSettings.isOpen !== false);
         };
 
         socket.on('cartUpdated', handleCartUpdate);
@@ -178,7 +182,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
             discount,
             appliedPromoCode,
             applicableCategories,
-            deliveryFee
+            deliveryFee,
+            isOpen
         }}>
             {children}
         </CartContext.Provider>

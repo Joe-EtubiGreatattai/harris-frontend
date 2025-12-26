@@ -1,4 +1,4 @@
-import { Box } from "@chakra-ui/react"
+import { Box, Text } from "@chakra-ui/react"
 import { useState, useEffect } from "react"
 import { HomeHeader } from "../components/home/HomeHeader"
 import { SearchSection } from "../components/home/SearchSection"
@@ -38,15 +38,19 @@ export const HomePage = () => {
         return saved ? JSON.parse(saved) : []
     })
     const [loading, setLoading] = useState(products.length === 0)
-    const { applyPromoCode, appliedPromoCode } = useCart()
+    const { applyPromoCode, appliedPromoCode, isOpen } = useCart()
     const [searchParams] = useSearchParams()
 
     useEffect(() => {
         socket.on('settingsUpdated', (updatedSettings: any) => {
+            const description = updatedSettings.isOpen === false
+                ? "We are currently closed. Checkout is disabled."
+                : `Delivery fee is now ₦${updatedSettings.deliveryFee}`;
+
             toaster.create({
                 title: "Settings Updated",
-                description: `Delivery fee is now ₦${updatedSettings.deliveryFee}`,
-                type: "info"
+                description: description,
+                type: updatedSettings.isOpen === false ? "error" : "info"
             })
         })
 
@@ -131,6 +135,11 @@ export const HomePage = () => {
             transition={{ duration: 0.3 }}
         >
             <Box pb={20}>
+                {!isOpen && (
+                    <Box bg="red.500" py={2} px={4} textAlign="center" color="white" fontWeight="bold" fontSize="sm">
+                        <Text>We are currently closed. You can still browse but checkout is disabled. 😴</Text>
+                    </Box>
+                )}
                 <HomeHeader />
                 <SearchSection searchQuery={searchQuery} onSearchChange={setSearchQuery} />
 
