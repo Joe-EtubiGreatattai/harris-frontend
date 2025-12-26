@@ -14,7 +14,7 @@ import { useUser } from "../../context/UserContext"
 interface CheckoutModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onConfirm: () => void;
+    onConfirm: (deliveryMethod: 'Delivery' | 'Pick-up') => void;
     isLoading?: boolean;
 }
 
@@ -23,7 +23,14 @@ export const CheckoutModal = ({ isOpen, onClose, onConfirm, isLoading }: Checkou
 
     // Local state for inputs
     const [email, setEmail] = useState("")
+    const [emailError, setEmailError] = useState<string | null>(null)
     const [address, setAddress] = useState("")
+    const [deliveryMethod, setDeliveryMethod] = useState<'Delivery' | 'Pick-up'>('Delivery')
+
+    const validateEmail = (email: string) => {
+        const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return re.test(email);
+    }
 
     // Pre-populate if user exists or geoAddress is available
     useEffect(() => {
@@ -38,10 +45,16 @@ export const CheckoutModal = ({ isOpen, onClose, onConfirm, isLoading }: Checkou
     }, [isOpen, user, geoAddress])
 
     const handleSubmit = () => {
-        if (!email || !address) return;
+        if (!validateEmail(email)) {
+            setEmailError("Please enter a valid email address");
+            return;
+        }
+
+        if (deliveryMethod === 'Delivery' && (!email || !address)) return;
+        if (deliveryMethod === 'Pick-up' && !email) return;
 
         updateUser({ email, address })
-        onConfirm()
+        onConfirm(deliveryMethod)
     }
 
     if (!isOpen) return null;
@@ -86,7 +99,33 @@ export const CheckoutModal = ({ isOpen, onClose, onConfirm, isLoading }: Checkou
                     </IconButton>
                 </Flex>
 
-                <Text color="gray.500" mb={6}>Please confirm your delivery details.</Text>
+                <Text color="gray.500" mb={6}>How would you like your order?</Text>
+
+                {/* Delivery Method Toggle */}
+                <Flex bg="gray.100" p={1} borderRadius="2xl" mb={6}>
+                    <Button
+                        flex={1}
+                        borderRadius="xl"
+                        size="sm"
+                        variant={deliveryMethod === 'Delivery' ? 'solid' : 'ghost'}
+                        bg={deliveryMethod === 'Delivery' ? 'white' : 'transparent'}
+                        shadow={deliveryMethod === 'Delivery' ? 'sm' : 'none'}
+                        onClick={() => setDeliveryMethod('Delivery')}
+                    >
+                        Delivery
+                    </Button>
+                    <Button
+                        flex={1}
+                        borderRadius="xl"
+                        size="sm"
+                        variant={deliveryMethod === 'Pick-up' ? 'solid' : 'ghost'}
+                        bg={deliveryMethod === 'Pick-up' ? 'white' : 'transparent'}
+                        shadow={deliveryMethod === 'Pick-up' ? 'sm' : 'none'}
+                        onClick={() => setDeliveryMethod('Pick-up')}
+                    >
+                        Pick-up
+                    </Button>
+                </Flex>
 
                 <VStack gap={4} align="stretch">
                     <Box>
@@ -96,51 +135,58 @@ export const CheckoutModal = ({ isOpen, onClose, onConfirm, isLoading }: Checkou
                             size="lg"
                             borderRadius="xl"
                             value={email}
-                            onChange={(e) => setEmail(e.target.value)}
+                            onChange={(e) => {
+                                setEmail(e.target.value)
+                                if (emailError) setEmailError(null)
+                            }}
                             bg="gray.50"
-                            border="none"
+                            border={emailError ? "1px solid" : "none"}
+                            borderColor={emailError ? "red.500" : "transparent"}
                         />
+                        {emailError && <Text color="red.500" fontSize="xs" mt={1} ml={1}>{emailError}</Text>}
                     </Box>
-                    <Box>
-                        <Text fontSize="sm" fontWeight="bold" color="gray.700" mb={2}>Delivery Address</Text>
-                        <Input
-                            placeholder="123 Pizza Street"
-                            size="lg"
-                            borderRadius="xl"
-                            value={address}
-                            onChange={(e) => setAddress(e.target.value)}
-                            bg="gray.50"
-                            border="none"
-                        />
+                    {deliveryMethod === 'Delivery' && (
+                        <Box>
+                            <Text fontSize="sm" fontWeight="bold" color="gray.700" mb={2}>Delivery Address</Text>
+                            <Input
+                                placeholder="123 Pizza Street"
+                                size="lg"
+                                borderRadius="xl"
+                                value={address}
+                                onChange={(e) => setAddress(e.target.value)}
+                                bg="gray.50"
+                                border="none"
+                            />
 
-                        {/* Saved Addresses Chips */}
-                        {(user?.savedAddresses?.home || user?.savedAddresses?.work) && (
-                            <Flex mt={3} gap={2}>
-                                {user.savedAddresses.home && (
-                                    <Button
-                                        size="xs"
-                                        variant={address === user.savedAddresses.home ? "solid" : "outline"}
-                                        colorPalette="red"
-                                        borderRadius="full"
-                                        onClick={() => setAddress(user.savedAddresses!.home!)}
-                                    >
-                                        Home
-                                    </Button>
-                                )}
-                                {user.savedAddresses.work && (
-                                    <Button
-                                        size="xs"
-                                        variant={address === user.savedAddresses.work ? "solid" : "outline"}
-                                        colorPalette="red"
-                                        borderRadius="full"
-                                        onClick={() => setAddress(user.savedAddresses!.work!)}
-                                    >
-                                        Work
-                                    </Button>
-                                )}
-                            </Flex>
-                        )}
-                    </Box>
+                            {/* Saved Addresses Chips */}
+                            {(user?.savedAddresses?.home || user?.savedAddresses?.work) && (
+                                <Flex mt={3} gap={2}>
+                                    {user.savedAddresses.home && (
+                                        <Button
+                                            size="xs"
+                                            variant={address === user.savedAddresses.home ? "solid" : "outline"}
+                                            colorPalette="red"
+                                            borderRadius="full"
+                                            onClick={() => setAddress(user.savedAddresses!.home!)}
+                                        >
+                                            Home
+                                        </Button>
+                                    )}
+                                    {user.savedAddresses.work && (
+                                        <Button
+                                            size="xs"
+                                            variant={address === user.savedAddresses.work ? "solid" : "outline"}
+                                            colorPalette="red"
+                                            borderRadius="full"
+                                            onClick={() => setAddress(user.savedAddresses!.work!)}
+                                        >
+                                            Work
+                                        </Button>
+                                    )}
+                                </Flex>
+                            )}
+                        </Box>
+                    )}
                 </VStack>
 
                 <Button
@@ -155,10 +201,10 @@ export const CheckoutModal = ({ isOpen, onClose, onConfirm, isLoading }: Checkou
                     onClick={handleSubmit}
                     loading={isLoading}
                     loadingText="Processing Payment..."
-                    disabled={!email || !address || isLoading}
-                    opacity={(!email || !address) ? 0.5 : 1}
+                    disabled={!email || (deliveryMethod === 'Delivery' && !address) || isLoading}
+                    opacity={(!email || (deliveryMethod === 'Delivery' && !address)) ? 0.5 : 1}
                 >
-                    Confirm Order
+                    {deliveryMethod === 'Delivery' ? 'Confirm Order' : 'Confirm Pick-up'}
                 </Button>
             </Box>
         </Box>

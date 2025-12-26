@@ -4,9 +4,10 @@ import { IoCheckmark, IoTime, IoFastFood, IoBicycle, IoHome } from "react-icons/
 
 interface OrderProgressProps {
     status: string;
+    deliveryMethod?: 'Delivery' | 'Pick-up';
 }
 
-const steps = [
+const deliverySteps = [
     { label: 'Confirmed', status: 'Pending', icon: IoTime },
     { label: 'Preparing', status: 'Preparing', icon: IoFastFood },
     { label: 'Ready', status: 'Ready for Delivery', icon: IoCheckmark },
@@ -14,7 +15,15 @@ const steps = [
     { label: 'Arrived', status: 'Delivered', icon: IoHome },
 ]
 
-export const OrderProgress = ({ status }: OrderProgressProps) => {
+const pickupSteps = [
+    { label: 'Confirmed', status: 'Pending', icon: IoTime },
+    { label: 'Preparing', status: 'Preparing', icon: IoFastFood },
+    { label: 'Ready', status: 'Ready for Delivery', icon: IoCheckmark },
+    { label: 'Picked Up', status: 'Delivered', icon: IoHome },
+]
+
+export const OrderProgress = ({ status, deliveryMethod = 'Delivery' }: OrderProgressProps) => {
+    const steps = deliveryMethod === 'Pick-up' ? pickupSteps : deliverySteps;
     // Determine the current step index
     const statusIndex = steps.findIndex(s => s.status === status)
     const currentIndex = statusIndex === -1 ? 0 : statusIndex

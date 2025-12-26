@@ -17,10 +17,14 @@ export interface UserProfile {
 
 export interface Order {
     id: string;
+    _id: string;
+    orderId: string;
     date: string; // Used for display date
     createdAt: string; // Used for timer
     items: CartItem[];
     total: number;
+    deliveryFee: number;
+    deliveryMethod: 'Delivery' | 'Pick-up';
     status: "Delivered" | "Pending" | "Preparing" | "Ready for Delivery" | "Out for Delivery";
     assignedRider?: {
         _id: string;
@@ -28,7 +32,17 @@ export interface Order {
         phone: string;
         image?: string;
     };
-    deliveryFee?: number;
+    estimatedTotalPrepTime?: number;
+    pings?: {
+        at: string;
+        acknowledged: boolean;
+        acknowledgedAt?: string;
+    }[];
+    user: {
+        email: string;
+        address: string;
+        phone?: string;
+    };
 }
 
 interface UserContextType {
@@ -75,13 +89,19 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             const history = await api.getOrderHistory(user.email);
             const formattedHistory = history.map((o: any) => ({
                 id: o.orderId || o._id,
+                _id: o._id,
+                orderId: o.orderId,
                 date: o.date || new Date(o.createdAt).toLocaleDateString(),
                 createdAt: o.createdAt || new Date().toISOString(),
                 items: o.items,
                 total: o.total,
                 status: o.status,
                 assignedRider: o.assignedRider,
-                deliveryFee: o.deliveryFee
+                deliveryFee: o.deliveryFee,
+                deliveryMethod: o.deliveryMethod || 'Delivery',
+                estimatedTotalPrepTime: o.estimatedTotalPrepTime,
+                pings: o.pings,
+                user: o.user
             }));
             setOrderHistory(formattedHistory);
         } catch (err) {
@@ -118,12 +138,19 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             if (orderEmail === user.email) {
                 const formatted: Order = {
                     id: updatedOrder.orderId || updatedOrder._id,
+                    _id: updatedOrder._id,
+                    orderId: updatedOrder.orderId,
                     date: updatedOrder.date || new Date(updatedOrder.createdAt).toLocaleDateString(),
                     createdAt: updatedOrder.createdAt || new Date().toISOString(),
                     items: updatedOrder.items,
                     total: updatedOrder.total,
                     status: updatedOrder.status,
-                    assignedRider: updatedOrder.assignedRider
+                    assignedRider: updatedOrder.assignedRider,
+                    deliveryFee: updatedOrder.deliveryFee,
+                    deliveryMethod: updatedOrder.deliveryMethod || 'Delivery',
+                    estimatedTotalPrepTime: updatedOrder.estimatedTotalPrepTime,
+                    pings: updatedOrder.pings,
+                    user: updatedOrder.user
                 };
                 updateLocalOrder(formatted);
             }

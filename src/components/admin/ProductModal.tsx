@@ -19,6 +19,7 @@ export const ProductModal = ({ isOpen, onClose, product, onSave }: ProductModalP
         description: "",
         isAvailable: true,
         isManualBestSeller: false,
+        estimatedPrepTime: 15,
         sizePrices: [] as { size: string, price: number }[],
         extras: [] as any[]
     });
@@ -39,6 +40,7 @@ export const ProductModal = ({ isOpen, onClose, product, onSave }: ProductModalP
                 description: product.description || "",
                 isAvailable: product.isAvailable !== false,
                 isManualBestSeller: product.isManualBestSeller || false,
+                estimatedPrepTime: product.estimatedPrepTime || 15,
                 sizePrices: pricesArr.length > 0 ? pricesArr : [{ size: "Standard", price: product.price || 0 }],
                 extras: product.extras || []
             });
@@ -51,6 +53,7 @@ export const ProductModal = ({ isOpen, onClose, product, onSave }: ProductModalP
                 description: "",
                 isAvailable: true,
                 isManualBestSeller: false,
+                estimatedPrepTime: 15,
                 sizePrices: [{ size: "M", price: 0 }],
                 extras: [
                     { name: "Cheese", price: 500, isAvailable: true },
@@ -137,6 +140,7 @@ export const ProductModal = ({ isOpen, onClose, product, onSave }: ProductModalP
                 description: formData.description,
                 isAvailable: formData.isAvailable,
                 isManualBestSeller: formData.isManualBestSeller,
+                estimatedPrepTime: formData.estimatedPrepTime,
                 prices: pricesObj,
                 extras: formData.extras
             };
@@ -220,6 +224,17 @@ export const ProductModal = ({ isOpen, onClose, product, onSave }: ProductModalP
                                             <option value="Drink">Drink</option>
                                         </select>
                                     </Box>
+                                </Box>
+
+                                <Box>
+                                    <Text fontWeight="bold" mb={2} fontSize="sm">Estimated Prep Time (mins)</Text>
+                                    <Input
+                                        name="estimatedPrepTime"
+                                        type="number"
+                                        value={formData.estimatedPrepTime}
+                                        onChange={(e) => setFormData({ ...formData, estimatedPrepTime: parseInt(e.target.value) })}
+                                        placeholder="e.g. 15"
+                                    />
                                 </Box>
 
                                 <Box>

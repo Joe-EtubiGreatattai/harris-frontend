@@ -58,11 +58,22 @@ export const CartPage = () => {
         onOpen()
     }
 
-    const proceedToOrder = async () => {
+    const proceedToOrder = async (deliveryMethod: 'Delivery' | 'Pick-up' = 'Delivery') => {
         if (!user) return;
 
         setIsSubmitting(true)
         try {
+            // Calculate total estimated prep time
+            const estimatedTotalPrepTime = items.reduce((acc, item: any) => {
+                // If the item doesn't have estimatedPrepTime, default to 15
+                const prepTime = item.estimatedPrepTime || 15;
+                return Math.max(acc, prepTime); // Assuming we can prep items simultaneously, so we take the max
+                // Alternatively, sum them if you want conservative estimate
+            }, 0);
+
+            const finalDeliveryFee = deliveryMethod === 'Pick-up' ? 0 : deliveryFee;
+            const finalTotal = subtotal - discountAmount + finalDeliveryFee;
+
             const orderData = {
                 orderId: Math.random().toString(36).substr(2, 9),
                 user: {
@@ -81,15 +92,17 @@ export const CartPage = () => {
                     extras: item.extras,
                     note: item.note
                 })),
-                deliveryFee: deliveryFee,
+                deliveryFee: finalDeliveryFee,
+                deliveryMethod: deliveryMethod,
+                estimatedTotalPrepTime: estimatedTotalPrepTime,
                 promoCode: appliedPromoCode,
-                total: total,
+                total: finalTotal,
                 status: "Pending",
                 date: new Date().toLocaleDateString('en-GB')
             }
 
             // 1. Initialize Payment
-            const payment = await api.initializePayment(user.email, total, {
+            const payment = await api.initializePayment(user.email, finalTotal, {
                 orderData: orderData
             })
 

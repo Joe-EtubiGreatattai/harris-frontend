@@ -27,6 +27,16 @@ export const OrderDetailsView = ({ order, onBack }: OrderDetailsViewProps) => {
                     >
                         {order.status}
                     </Badge>
+                    {order.deliveryMethod === 'Pick-up' && (
+                        <Badge
+                            colorScheme="purple"
+                            fontSize={{ base: "xs", md: "md" }}
+                            px={3} py={1}
+                            borderRadius="full"
+                        >
+                            Pick-up
+                        </Badge>
+                    )}
                 </Flex>
             </Flex>
 

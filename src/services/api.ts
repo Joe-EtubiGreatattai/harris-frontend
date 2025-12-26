@@ -46,6 +46,37 @@ export const api = {
         return response.json();
     },
 
+    pingOrder: async (id: string) => {
+        const response = await fetch(`${API_URL}/orders/${id}/ping`, {
+            method: "POST",
+            headers,
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || "Failed to ping kitchen");
+        }
+        return response.json();
+    },
+
+    acknowledgePing: async (id: string) => {
+        const response = await fetch(`${API_URL}/orders/${id}/acknowledge-ping`, {
+            method: "POST",
+            headers,
+        });
+        if (!response.ok) throw new Error("Failed to acknowledge ping");
+        return response.json();
+    },
+
+    updateOrderPhone: async (id: string, phone: string) => {
+        const response = await fetch(`${API_URL}/orders/${id}/phone`, {
+            method: "PATCH",
+            headers,
+            body: JSON.stringify({ phone }),
+        });
+        if (!response.ok) throw new Error("Failed to update phone number");
+        return response.json();
+    },
+
     // Admin: Orders
     getAllOrders: async () => {
         const response = await fetch(`${API_URL}/orders`, { headers });

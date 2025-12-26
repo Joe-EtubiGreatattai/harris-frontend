@@ -107,6 +107,33 @@ export const AdminPage = () => {
             setSettings(newSettings);
         });
 
+        socket.on('adminOrderPinged', (data: { orderId: string, userEmail: string }) => {
+            toaster.create({
+                title: "User Pinged Kitchen!",
+                description: `Order #${data.orderId} - ${data.userEmail} is asking for an update.`,
+                type: "warning",
+                duration: 10000,
+                action: {
+                    label: "Acknowledge",
+                    onClick: async () => {
+                        try {
+                            await api.acknowledgePing(data.orderId);
+                            toaster.create({
+                                title: "Acknowledged",
+                                description: "User has been notified.",
+                                type: "success"
+                            });
+                            fetchData();
+                        } catch (err) {
+                            alert("Failed to acknowledge");
+                        }
+                    }
+                }
+            });
+            // Play a different sound or re-fetch to show ping status
+            fetchData();
+        });
+
         return () => {
             socket.off('newOrder');
             socket.off('orderUpdated');
@@ -403,10 +430,28 @@ export const AdminPage = () => {
                                         <HStack mb={1} wrap="wrap">
                                             <Text fontWeight="bold" fontSize="lg">Order #{order.orderId}</Text>
                                             <Badge colorScheme={order.status === 'Delivered' ? 'green' : 'orange'}>{order.status}</Badge>
+                                            {order.deliveryMethod === 'Pick-up' && <Badge colorScheme="purple">PICK-UP</Badge>}
+                                            {order.pings?.some((p: any) => !p.acknowledged) && (
+                                                <Badge colorScheme="red" variant="solid" animation="pulse 2s infinite">PINGED!</Badge>
+                                            )}
                                         </HStack>
                                         <Text fontSize="xs" color="gray.500">{new Date(order.createdAt).toLocaleString()} • {order.items.length} items</Text>
                                     </Box>
-                                    <Text fontWeight="bold" fontSize="xl" color="red.500">₦{order.total.toLocaleString()}</Text>
+                                    <VStack align="flex-end" gap={0}>
+                                        <Text fontWeight="bold" fontSize="xl" color="red.500">₦{order.total.toLocaleString()}</Text>
+                                        {order.pings?.some((p: any) => !p.acknowledged) && (
+                                            <Button
+                                                size="xs"
+                                                colorScheme="red"
+                                                mt={1}
+                                                onClick={() => {
+                                                    api.acknowledgePing(order.orderId).then(() => fetchData())
+                                                }}
+                                            >
+                                                Acknowledge Ping
+                                            </Button>
+                                        )}
+                                    </VStack>
                                 </Flex>
 
                                 <VStack align="start" pl={3} borderLeft="2px solid" borderColor="gray.100" my={3} gap={1}>

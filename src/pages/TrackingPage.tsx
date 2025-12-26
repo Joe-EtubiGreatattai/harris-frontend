@@ -1,15 +1,18 @@
-import { Box, Flex, Text, Image, Button, IconButton, VStack, Center, Spinner } from "@chakra-ui/react"
+import { Box, Flex, Text, Image, Button, IconButton, VStack, Center, Spinner, Input, HStack } from "@chakra-ui/react"
 import { useNavigate } from "react-router-dom"
-import { IoTimeOutline, IoCall, IoChevronBack, IoClose, IoWarning } from "react-icons/io5"
+import { IoTimeOutline, IoCall, IoChevronBack, IoClose, IoWarning, IoNotificationsOutline } from "react-icons/io5"
 import { useUser } from "../context/UserContext"
 import { useState, useEffect } from "react"
 import type { Order } from "../context/UserContext"
 import { OrderProgress } from "../components/tracking/OrderProgress"
 import confetti from 'canvas-confetti'
 import { motion, AnimatePresence } from "framer-motion"
+import { socket } from "../services/socket"
+import { api } from "../services/api"
+import { toaster } from "../components/ui/toaster"
 
 // Persistent Timer Component
-const OrderTimer = ({ createdAt, isBusy }: { createdAt: string, isBusy?: boolean }) => {
+const OrderTimer = ({ createdAt, isBusy, estimatedPrepTime }: { createdAt: string, isBusy?: boolean, estimatedPrepTime?: number }) => {
     const [timeLeft, setTimeLeft] = useState(0)
 
     useEffect(() => {
@@ -17,7 +20,7 @@ const OrderTimer = ({ createdAt, isBusy }: { createdAt: string, isBusy?: boolean
             const start = new Date(createdAt).getTime()
             const now = new Date().getTime()
             const elapsed = Math.floor((now - start) / 1000)
-            const baseDuration = 45 * 60 // 45 minutes base
+            const baseDuration = (estimatedPrepTime || 45) * 60 // Use estimated prep time if available
             const busyExtra = isBusy ? 20 * 60 : 0 // 20 extra minutes if busy
             const duration = baseDuration + busyExtra
             return Math.max(0, duration - elapsed)
@@ -29,7 +32,7 @@ const OrderTimer = ({ createdAt, isBusy }: { createdAt: string, isBusy?: boolean
         }, 1000)
 
         return () => clearInterval(timer)
-    }, [createdAt, isBusy])
+    }, [createdAt, isBusy, estimatedPrepTime])
 
     const formatTime = (seconds: number) => {
         const mins = Math.floor(seconds / 60)
@@ -82,6 +85,90 @@ export const TrackingPage = () => {
     const [showConfirm, setShowConfirm] = useState<Order | null>(null)
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
     const [ratingOrder, setRatingOrder] = useState<string | null>(null)
+    const [pingCooldowns, setPingCooldowns] = useState<Record<string, number>>({})
+    const [phonePromptOrder, setPhonePromptOrder] = useState<Order | null>(null)
+    const [newPhone, setNewPhone] = useState("")
+    const [isUpdatingPhone, setIsUpdatingPhone] = useState(false)
+
+    useEffect(() => {
+        // Find if any active order is missing a phone number
+        const orderWithoutPhone = activeOrders.find(o => !o.user?.phone && o.status !== 'Delivered')
+        if (orderWithoutPhone && !phonePromptOrder) {
+            setPhonePromptOrder(orderWithoutPhone)
+            setNewPhone("")
+        }
+    }, [activeOrders])
+
+    useEffect(() => {
+        activeOrders.forEach(order => {
+            socket.emit('joinOrder', order.id)
+        })
+
+        socket.on('orderPingAcknowledged', (data) => {
+            toaster.create({
+                title: "Kitchen Acknowledged",
+                description: `We're working hard on your order #${data.orderId}!`,
+                type: "success"
+            })
+        })
+
+        return () => {
+            socket.off('orderPingAcknowledged')
+        }
+    }, [activeOrders])
+
+    // Update cooldowns every second
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setPingCooldowns(prev => {
+                const now = Date.now()
+                const next = { ...prev }
+                let changed = false
+                Object.keys(next).forEach(id => {
+                    if (next[id] <= now) {
+                        delete next[id]
+                        changed = true
+                    }
+                })
+                return changed ? next : prev
+            })
+        }, 1000)
+        return () => clearInterval(interval)
+    }, [])
+
+    const handlePing = async (order: Order) => {
+        try {
+            await api.pingOrder(order.id)
+            setPingCooldowns(prev => ({ ...prev, [order.id]: Date.now() + 3 * 60 * 1000 }))
+            toaster.create({
+                title: "Kitchen Pinged!",
+                description: "We've notified the kitchen to check on your order.",
+                type: "info"
+            })
+            // Also emit via socket for real-time admin view
+            socket.emit('orderPinged', { orderId: order.id, userEmail: order.user.email })
+        } catch (err: any) {
+            alert(err.message || "Failed to ping kitchen")
+        }
+    }
+
+    const handleUpdatePhone = async () => {
+        if (!phonePromptOrder || !newPhone) return
+        setIsUpdatingPhone(true)
+        try {
+            await api.updateOrderPhone(phonePromptOrder.id, newPhone)
+            setPhonePromptOrder(null)
+            toaster.create({
+                title: "Phone Number Added",
+                description: "We'll call you if there's any update.",
+                type: "success"
+            })
+        } catch (err: any) {
+            alert("Failed to update phone number")
+        } finally {
+            setIsUpdatingPhone(false)
+        }
+    }
 
     const isBusy = activeOrders.length > 5
 
@@ -269,7 +356,7 @@ export const TrackingPage = () => {
                                         _hover={{ shadow: "md" }}
                                         transition="all 0.2s"
                                     >
-                                        <OrderProgress status={order.status} />
+                                        <OrderProgress status={order.status} deliveryMethod={order.deliveryMethod} />
 
                                         <Flex justify="space-between" align="center" mb={4}>
                                             <Text fontWeight="bold" color="gray.800">Order #{order.id}</Text>
@@ -295,9 +382,36 @@ export const TrackingPage = () => {
                                                 />
                                             </motion.div>
                                             {(order.status === 'Preparing' || order.status === 'Ready for Delivery' || order.status === 'Out for Delivery') ? (
-                                                <OrderTimer createdAt={order.createdAt} isBusy={isBusy} />
+                                                <OrderTimer createdAt={order.createdAt} isBusy={isBusy} estimatedPrepTime={order.estimatedTotalPrepTime} />
                                             ) : null}
                                         </Center>
+
+                                        {/* Ping Button */}
+                                        {(order.status === 'Pending' || order.status === 'Preparing' || order.status === 'Ready for Delivery') && (
+                                            <Button
+                                                w="full"
+                                                variant="outline"
+                                                colorPalette="blue"
+                                                borderRadius="xl"
+                                                mt={2}
+                                                // Using a simple icon if props are tricky
+                                                onClick={(e) => {
+                                                    e.stopPropagation()
+                                                    handlePing(order)
+                                                }}
+                                                disabled={!!pingCooldowns[order.id]}
+                                            >
+                                                <HStack gap={2}>
+                                                    <IoNotificationsOutline />
+                                                    <Text>
+                                                        {pingCooldowns[order.id]
+                                                            ? `Ping Kitchen (${Math.ceil((pingCooldowns[order.id] - Date.now()) / 1000)}s)`
+                                                            : "Ping Kitchen"
+                                                        }
+                                                    </Text>
+                                                </HStack>
+                                            </Button>
+                                        )}
 
                                         {/* Delivery Person - Simplified */}
                                         {(order.status === 'Ready for Delivery' || order.status === 'Out for Delivery') && order.assignedRider && (
@@ -538,6 +652,71 @@ export const TrackingPage = () => {
                         orderId={ratingOrder}
                     />
                 )}
+
+                {/* Phone Prompt Modal */}
+                <AnimatePresence>
+                    {phonePromptOrder && (
+                        <Box
+                            position="fixed"
+                            top={0} left={0} right={0} bottom={0}
+                            bg="black/60"
+                            backdropFilter="blur(3px)"
+                            zIndex={300}
+                            display="flex"
+                            alignItems="center"
+                            justifyContent="center"
+                            p={6}
+                        >
+                            <motion.div
+                                initial={{ scale: 0.9, y: 20 }}
+                                animate={{ scale: 1, y: 0 }}
+                                exit={{ scale: 0.9, y: 20 }}
+                            >
+                                <Box
+                                    bg="white"
+                                    borderRadius="3xl"
+                                    p={6}
+                                    maxW="sm"
+                                    w="full"
+                                    color="gray.800"
+                                    onClick={(e) => e.stopPropagation()}
+                                    textAlign="center"
+                                    boxShadow="2xl"
+                                >
+                                    <Box fontSize="40px" mb={4}>📱</Box>
+                                    <Text fontWeight="bold" fontSize="xl" mb={2}>Missed your number!</Text>
+                                    <Text color="gray.500" mb={6}>
+                                        Please provide your phone number so we can reach you about order #{phonePromptOrder.id}.
+                                    </Text>
+
+                                    <Input
+                                        placeholder="Phone Number (e.g. 080...)"
+                                        size="lg"
+                                        borderRadius="xl"
+                                        mb={4}
+                                        value={newPhone}
+                                        onChange={(e: any) => setNewPhone(e.target.value)}
+                                        textAlign="center"
+                                    />
+
+                                    <Button
+                                        w="full"
+                                        bg="red.500"
+                                        color="white"
+                                        borderRadius="xl"
+                                        size="lg"
+                                        _hover={{ bg: "red.600" }}
+                                        onClick={handleUpdatePhone}
+                                        loading={isUpdatingPhone}
+                                        disabled={!newPhone}
+                                    >
+                                        Save & Continue Tracking
+                                    </Button>
+                                </Box>
+                            </motion.div>
+                        </Box>
+                    )}
+                </AnimatePresence>
             </Box>
         </motion.div>
     )
