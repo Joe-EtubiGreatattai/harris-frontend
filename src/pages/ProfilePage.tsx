@@ -4,11 +4,31 @@ import { pushNotificationService } from "../services/pushNotificationService"
 import { useNavigate } from "react-router-dom"
 import { useUser } from "../context/UserContext"
 import { useCart } from "../context/CartContext"
+import { useState, useEffect } from "react"
 
 export const ProfilePage = () => {
     const navigate = useNavigate()
     const { user, orderHistory, updateSavedAddress, updateUser } = useUser()
     const { addItemsToCart, clearCart } = useCart()
+
+    const [phoneInput, setPhoneInput] = useState(user?.phone || "")
+    const [isSaving, setIsSaving] = useState(false)
+
+    useEffect(() => {
+        if (user?.phone) setPhoneInput(user.phone)
+    }, [user?.phone])
+
+    const handleSaveProfile = async () => {
+        if (!user) return;
+        setIsSaving(true);
+        try {
+            await updateUser({ ...user, phone: phoneInput });
+        } catch (err) {
+            console.error("Failed to save profile", err);
+        } finally {
+            setIsSaving(false);
+        }
+    }
 
     const handleReorder = (items: any[]) => {
         clearCart() // Clear current cart first? Or append? Usually reorder replaces or adds. Let's append to keep it simple, or maybe clear to avoid confusion. User request said "simple reorder".
@@ -53,18 +73,28 @@ export const ProfilePage = () => {
                     {user?.address || "No address set"}
                 </Text>
 
-                <Input
-                    placeholder="Add Phone Number"
-                    value={user?.phone || ""}
-                    onChange={(e) => user && updateUser({ ...user, phone: e.target.value })}
-                    variant="subtle"
-                    size="sm"
-                    textAlign="center"
-                    mt={3}
-                    maxW="200px"
-                    bg="gray.50"
-                    borderRadius="full"
-                />
+                <HStack mt={4} w="full" maxW="250px" gap={2}>
+                    <Input
+                        placeholder="Phone Number"
+                        value={phoneInput}
+                        onChange={(e) => setPhoneInput(e.target.value)}
+                        variant="subtle"
+                        size="sm"
+                        bg="gray.50"
+                        borderRadius="full"
+                        textAlign="center"
+                    />
+                    <Button
+                        size="sm"
+                        colorPalette="red"
+                        borderRadius="full"
+                        onClick={handleSaveProfile}
+                        loading={isSaving}
+                        px={6}
+                    >
+                        Save
+                    </Button>
+                </HStack>
             </Flex>
 
             {/* Notifications */}

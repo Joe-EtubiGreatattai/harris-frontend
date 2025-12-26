@@ -373,5 +373,21 @@ export const api = {
         });
         if (!response.ok) throw new Error("Failed to send email");
         return response.json();
+    },
+
+    getUserProfile: async (email: string) => {
+        const response = await fetch(`${API_URL}/users/profile/${email}`, { headers });
+        if (!response.ok) throw new Error("Failed to fetch user profile");
+        return response.json();
+    },
+
+    updateUserProfile: async (data: any) => {
+        const response = await fetch(`${API_URL}/users/profile`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(data)
+        });
+        if (!response.ok) throw new Error("Failed to update user profile");
+        return response.json();
     }
 };

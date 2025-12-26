@@ -119,11 +119,26 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         if (user) {
             localStorage.setItem('user_profile', JSON.stringify(user));
             refreshOrders();
+
+            // Sync with backend in background if email is present
+            const syncProfile = async () => {
+                try {
+                    const latestProfile = await api.getUserProfile(user.email);
+                    if (latestProfile && (latestProfile.phone !== user.phone || latestProfile.address !== user.address)) {
+                        const merged = { ...user, ...latestProfile };
+                        setUser(merged);
+                        localStorage.setItem('user_profile', JSON.stringify(merged));
+                    }
+                } catch (err) {
+                    console.error("Failed to sync profile with backend", err);
+                }
+            };
+            syncProfile();
         } else {
             setOrderHistory([]);
             setIsLoadingOrders(false);
         }
-    }, [user, refreshOrders]);
+    }, [user?.email, refreshOrders]); // Simplified dependency to only trigger on email change for initial load or manual refresh
 
     // Real-time Socket Listeners
     useEffect(() => {
@@ -187,9 +202,17 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         };
     }, [user?.email, refreshOrders, updateLocalOrder]);
 
-    const updateUser = (details: UserProfile) => {
+    const updateUser = async (details: UserProfile) => {
         setUser(details);
+        localStorage.setItem('user_profile', JSON.stringify(details));
         socket.emit('userProfileUpdated', details); // Notify other tabs
+
+        // Persist to database
+        try {
+            await api.updateUserProfile(details);
+        } catch (err) {
+            console.error("Failed to persist profile update", err);
+        }
     };
 
     const setGeoAddress = (address: string) => {
@@ -227,7 +250,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         return user?.favorites?.includes(productId) || false;
     };
 
-    const updateSavedAddress = (type: 'home' | 'work', address: string) => {
+    const updateSavedAddress = async (type: 'home' | 'work', address: string) => {
         if (!user) return;
         const updatedUser = {
             ...user,
@@ -238,6 +261,12 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         };
         setUser(updatedUser);
         localStorage.setItem('user_profile', JSON.stringify(updatedUser));
+
+        try {
+            await api.updateUserProfile(updatedUser);
+        } catch (err) {
+            console.error("Failed to persist address update", err);
+        }
     };
 
 
