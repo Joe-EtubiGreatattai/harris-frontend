@@ -166,8 +166,9 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         const handleProfileUpdate = (updatedProfile: UserProfile) => {
             if (updatedProfile.email === user.email) {
                 // Only update if it's different to avoid loops
+                // Check both address and phone for changes
                 setUser(prev => {
-                    if (prev?.address !== updatedProfile.address) {
+                    if (prev?.address !== updatedProfile.address || prev?.phone !== updatedProfile.phone) {
                         return updatedProfile;
                     }
                     return prev;

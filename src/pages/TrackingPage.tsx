@@ -81,7 +81,7 @@ import { RatingModal } from "../components/tracking/RatingModal"
 
 export const TrackingPage = () => {
     const navigate = useNavigate()
-    const { activeOrders, completeOrder, isLoadingOrders } = useUser()
+    const { user, activeOrders, completeOrder, isLoadingOrders, updateUser } = useUser()
     const [showConfirm, setShowConfirm] = useState<Order | null>(null)
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
     const [ratingOrder, setRatingOrder] = useState<string | null>(null)
@@ -157,6 +157,12 @@ export const TrackingPage = () => {
         setIsUpdatingPhone(true)
         try {
             await api.updateOrderPhone(phonePromptOrder.id, newPhone)
+
+            // Sync with global user profile
+            if (user) {
+                updateUser({ ...user, phone: newPhone })
+            }
+
             setPhonePromptOrder(null)
             toaster.create({
                 title: "Phone Number Added",
