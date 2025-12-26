@@ -1,8 +1,7 @@
 import { Box, Flex, Text, Button, VStack, HStack, Badge, Input, Spinner } from "@chakra-ui/react";
 import { useState, useEffect } from "react";
-import { IoPerson, IoMail, IoReceipt, IoSearch, IoCloudDone, IoClose } from "react-icons/io5";
+import { IoPerson, IoReceipt, IoSearch, IoClose } from "react-icons/io5";
 import { api } from "../../services/api";
-import { toaster } from "../ui/toaster";
 
 export const UsersTab = () => {
     const [users, setUsers] = useState<any[]>([]);
@@ -11,10 +10,6 @@ export const UsersTab = () => {
     const [selectedUser, setSelectedUser] = useState<any>(null);
     const [userOrders, setUserOrders] = useState<any[]>([]);
     const [isOrdersLoading, setIsOrdersLoading] = useState(false);
-    const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
-    const [emailSubject, setEmailSubject] = useState("");
-    const [emailMessage, setEmailMessage] = useState("");
-    const [isSendingEmail, setIsSendingEmail] = useState(false);
 
     useEffect(() => {
         fetchUsers();
@@ -45,35 +40,6 @@ export const UsersTab = () => {
         }
     };
 
-    const handleOpenEmailModal = (user: any) => {
-        setSelectedUser(user);
-        setIsEmailModalOpen(true);
-    };
-
-    const handleSendEmail = async () => {
-        if (!emailSubject || !emailMessage) {
-            toaster.create({ title: "Error", description: "Subject and message are required", type: "error" });
-            return;
-        }
-
-        setIsSendingEmail(true);
-        try {
-            await api.sendEmail({
-                email: selectedUser.email,
-                subject: emailSubject,
-                message: emailMessage
-            });
-            toaster.create({ title: "Success", description: "Email sent successfully", type: "success" });
-            setIsEmailModalOpen(false);
-            setEmailSubject("");
-            setEmailMessage("");
-        } catch (error) {
-            console.error("Failed to send email", error);
-            toaster.create({ title: "Error", description: "Failed to send email", type: "error" });
-        } finally {
-            setIsSendingEmail(false);
-        }
-    };
 
     const filteredUsers = users.filter(user =>
         user.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -153,9 +119,6 @@ export const UsersTab = () => {
                                             <Button size="xs" variant="outline" onClick={() => handleViewOrders(user.email)} gap={2}>
                                                 <IoReceipt /> History
                                             </Button>
-                                            <Button size="xs" colorScheme="red" onClick={() => handleOpenEmailModal(user)} gap={2}>
-                                                <IoMail /> Email
-                                            </Button>
                                         </HStack>
                                     </Box>
                                 </Box>
@@ -171,7 +134,7 @@ export const UsersTab = () => {
             </Box>
 
             {/* Custom Modal for Order History */}
-            {selectedUser && !isEmailModalOpen && (
+            {selectedUser && (
                 <Flex position="fixed" top={0} left={0} w="full" h="full" bg="blackAlpha.600" zIndex={2000} justify="center" align="center" p={4}>
                     <Box bg="white" w="full" maxW="800px" borderRadius="2xl" shadow="2xl" overflow="hidden" position="relative">
                         <Flex justify="space-between" align="center" p={6} borderBottom="1px solid" borderColor="gray.100">
@@ -220,65 +183,6 @@ export const UsersTab = () => {
                 </Flex>
             )}
 
-            {/* Custom Modal for Sending Email */}
-            {isEmailModalOpen && selectedUser && (
-                <Flex position="fixed" top={0} left={0} w="full" h="full" bg="blackAlpha.600" zIndex={2000} justify="center" align="center" p={4}>
-                    <Box bg="white" w="full" maxW="600px" borderRadius="2xl" shadow="2xl" overflow="hidden">
-                        <Flex justify="space-between" align="center" p={6} borderBottom="1px solid" borderColor="gray.100">
-                            <VStack align="start" gap={0}>
-                                <Text fontSize="xl" fontWeight="bold">Send Email</Text>
-                                <Text fontSize="sm" color="gray.500">To: {selectedUser.email}</Text>
-                            </VStack>
-                            <Button variant="ghost" onClick={() => setIsEmailModalOpen(false)} p={0}>
-                                <IoClose size={24} />
-                            </Button>
-                        </Flex>
-
-                        <VStack p={6} gap={4} align="stretch">
-                            <Box>
-                                <Text fontSize="sm" fontWeight="bold" mb={2}>Subject</Text>
-                                <Input
-                                    placeholder="Enter subject..."
-                                    value={emailSubject}
-                                    onChange={(e) => setEmailSubject(e.target.value)}
-                                    borderRadius="xl"
-                                />
-                            </Box>
-                            <Box>
-                                <Text fontSize="sm" fontWeight="bold" mb={2}>Message</Text>
-                                <textarea
-                                    style={{
-                                        width: '100%',
-                                        height: '200px',
-                                        padding: '12px',
-                                        borderRadius: '12px',
-                                        border: '1px solid #E2E8F0',
-                                        outline: 'none',
-                                        fontFamily: 'inherit'
-                                    }}
-                                    placeholder="Type your message here..."
-                                    value={emailMessage}
-                                    onChange={(e) => setEmailMessage(e.target.value)}
-                                />
-                            </Box>
-                        </VStack>
-
-                        <Flex justify="flex-end" p={6} bg="gray.50" gap={3}>
-                            <Button variant="ghost" onClick={() => setIsEmailModalOpen(false)}>Cancel</Button>
-                            <Button
-                                colorScheme="red"
-                                onClick={handleSendEmail}
-                                loading={isSendingEmail}
-                                borderRadius="xl"
-                                px={8}
-                                gap={2}
-                            >
-                                <IoCloudDone /> Send Email
-                            </Button>
-                        </Flex>
-                    </Box>
-                </Flex>
-            )}
         </VStack>
     );
 };

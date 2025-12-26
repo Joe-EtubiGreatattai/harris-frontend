@@ -372,16 +372,6 @@ export const api = {
         return response.json();
     },
 
-    sendEmail: async (data: { email: string, subject: string, message: string }) => {
-        const response = await fetch(`${API_URL}/users/send-email`, {
-            method: 'POST',
-            headers: getHeaders(),
-            body: JSON.stringify(data)
-        });
-        if (!response.ok) throw new Error("Failed to send email");
-        return response.json();
-    },
-
     getUserProfile: async (email: string) => {
         const response = await fetch(`${API_URL}/users/profile/${email}`, { headers: getHeaders() });
         if (!response.ok) throw new Error("Failed to fetch user profile");
