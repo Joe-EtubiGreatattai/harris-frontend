@@ -140,8 +140,15 @@ export const api = {
         return response.json()
     },
 
-    getTransactions: async () => {
-        const response = await fetch(`${API_URL}/payment/transactions`, { headers });
+    getTransactions: async (from?: string, to?: string, status?: string) => {
+        let url = `${API_URL}/payment/transactions`;
+        const params = new URLSearchParams();
+        if (from) params.append('from', from);
+        if (to) params.append('to', to);
+        if (status) params.append('status', status);
+        if (params.toString()) url += `?${params.toString()}`;
+
+        const response = await fetch(url, { headers });
         if (!response.ok) throw new Error("Failed to fetch transactions");
         return response.json();
     },
