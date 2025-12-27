@@ -13,6 +13,7 @@ import { ProfilePage } from "./pages/ProfilePage"
 import { PaymentCallbackPage } from "./pages/PaymentCallbackPage"
 import { AdminPage } from './pages/AdminPage';
 import { LoginPage } from "./pages/LoginPage"
+import { RiderPanel } from "./pages/RiderPanel"
 import { ProtectedRoute } from "./components/auth/ProtectedRoute"
 import { Toaster } from "./components/ui/toaster"
 import { OrderUpdateHandler } from "./components/notifications/OrderUpdateHandler"
@@ -28,6 +29,7 @@ function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/rider" element={<RiderPanel />} />
             <Route element={<ProtectedRoute />}>
               <Route path="/admin" element={<AdminPage />} />
             </Route>

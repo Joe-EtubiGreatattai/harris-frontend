@@ -1,10 +1,12 @@
 import { Box, Flex, Text, IconButton, Image, Button, VStack, Separator, Input, HStack } from "@chakra-ui/react"
-import { IoChevronBack, IoReceiptOutline, IoRefresh, IoHomeOutline, IoBriefcaseOutline, IoNotificationsOutline, IoNotifications } from "react-icons/io5"
+import { IoChevronBack, IoReceiptOutline, IoRefresh, IoHomeOutline, IoBriefcaseOutline, IoNotificationsOutline, IoNotifications, IoLocation } from "react-icons/io5"
 import { pushNotificationService } from "../services/pushNotificationService"
 import { useNavigate } from "react-router-dom"
 import { useUser } from "../context/UserContext"
 import { useCart } from "../context/CartContext"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
+import { socket } from "../services/socket"
+import { toaster } from "../components/ui/toaster"
 
 export const ProfilePage = () => {
     const navigate = useNavigate()
@@ -13,6 +15,16 @@ export const ProfilePage = () => {
 
     const [phoneInput, setPhoneInput] = useState(user?.phone || "")
     const [isSaving, setIsSaving] = useState(false)
+    const [isSharingLocation, setIsSharingLocation] = useState(user?.isLocationSharing || false)
+    const trackingInterval = useRef<any>(null)
+
+    useEffect(() => {
+        if (user?.isLocationSharing) {
+            setIsSharingLocation(true)
+            startTracking()
+        }
+        return () => stopTracking()
+    }, [user?.email])
 
     useEffect(() => {
         if (user?.phone) setPhoneInput(user.phone)
@@ -23,10 +35,68 @@ export const ProfilePage = () => {
         setIsSaving(true);
         try {
             await updateUser({ ...user, phone: phoneInput });
+            toaster.create({ title: "Profile updated", type: "success" });
         } catch (err) {
             console.error("Failed to save profile", err);
+            toaster.create({ title: "Failed to update profile", type: "error" });
         } finally {
             setIsSaving(false);
+        }
+    }
+
+    const toggleLocationSharing = async () => {
+        if (!user) return;
+        const newStatus = !isSharingLocation;
+        setIsSharingLocation(newStatus);
+
+        try {
+            // Update persistence
+            await updateUser({ ...user, isLocationSharing: newStatus });
+
+            if (newStatus) {
+                startTracking();
+                toaster.create({ title: "Location sharing active", type: "success" });
+            } else {
+                stopTracking();
+                toaster.create({ title: "Location sharing stopped", type: "info" });
+            }
+        } catch (err) {
+            setIsSharingLocation(!newStatus);
+            toaster.create({ title: "Update failed", type: "error" });
+        }
+    }
+
+    const startTracking = () => {
+        if (trackingInterval.current) clearInterval(trackingInterval.current);
+
+        const broadcast = (pos: any) => {
+            socket.emit('updateUserLocation', {
+                email: user?.email,
+                location: { lat: pos.coords.latitude, lng: pos.coords.longitude },
+                isSharing: true
+            });
+        };
+
+        // Initial
+        navigator.geolocation.getCurrentPosition(broadcast, (err) => console.error(err));
+
+        // Loop
+        trackingInterval.current = setInterval(() => {
+            navigator.geolocation.getCurrentPosition(broadcast, (err) => console.error(err));
+        }, 15000); // 15s for users to save battery
+    }
+
+    const stopTracking = () => {
+        if (trackingInterval.current) {
+            clearInterval(trackingInterval.current);
+            trackingInterval.current = null;
+        }
+        if (user?.email) {
+            socket.emit('updateUserLocation', {
+                email: user.email,
+                location: { lat: 0, lng: 0 },
+                isSharing: false
+            });
         }
     }
 
@@ -132,6 +202,34 @@ export const ProfilePage = () => {
                             disabled={pushNotificationService.checkPermission() === 'granted'}
                         >
                             {pushNotificationService.checkPermission() === 'granted' ? <IoNotifications /> : "Enable"}
+                        </Button>
+                    </HStack>
+                </Box>
+            </Box>
+
+            {/* Sharing Location */}
+            <Box px={6} mb={8}>
+                <Text fontWeight="bold" fontSize="lg" mb={4} color="gray.800">Support Coordination</Text>
+                <Box bg="white" p={4} borderRadius="2xl" shadow="sm">
+                    <HStack justify="space-between">
+                        <HStack gap={4}>
+                            <Flex bg="blue.50" p={2} borderRadius="xl" color="blue.500">
+                                <IoLocation size={20} />
+                            </Flex>
+                            <Box>
+                                <Text fontWeight="bold" fontSize="sm">Live Location Sharing</Text>
+                                <Text fontSize="xs" color="gray.500">Help the rider find you faster</Text>
+                            </Box>
+                        </HStack>
+                        <Button
+                            size="sm"
+                            colorPalette={isSharingLocation ? "green" : "gray"}
+                            variant={isSharingLocation ? "solid" : "outline"}
+                            borderRadius="full"
+                            onClick={toggleLocationSharing}
+                            px={6}
+                        >
+                            {isSharingLocation ? "Sharing" : "Share"}
                         </Button>
                     </HStack>
                 </Box>

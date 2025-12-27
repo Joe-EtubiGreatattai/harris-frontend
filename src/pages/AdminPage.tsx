@@ -12,6 +12,7 @@ import { CampaignTab } from "../components/admin/CampaignTab";
 import { WithdrawalTab } from "../components/admin/WithdrawalTab";
 import { TransactionsTab } from "../components/admin/TransactionsTab";
 import { UsersTab } from "../components/admin/UsersTab";
+import { RiderMapTab } from "../components/admin/RiderMapTab";
 import { socket } from "../services/socket";
 
 export const AdminPage = () => {
@@ -27,7 +28,7 @@ export const AdminPage = () => {
     const [selectedOrder, setSelectedOrder] = useState<any>(null); // For details view
     const [editingProduct, setEditingProduct] = useState<any>(null);
     const [searchQuery, setSearchQuery] = useState("");
-    const [activeTab, setActiveTab] = useState<'orders' | 'products' | 'riders' | 'users' | 'settings' | 'reviews' | 'campaign' | 'withdrawals' | 'transactions'>('orders');
+    const [activeTab, setActiveTab] = useState<'orders' | 'products' | 'riders' | 'users' | 'map' | 'settings' | 'reviews' | 'campaign' | 'withdrawals' | 'transactions'>('orders');
     const navigate = useNavigate();
 
     // Derived state: Filter out Pending Payment orders from Admin view
@@ -409,6 +410,16 @@ export const AdminPage = () => {
                         </HStack>
                     </Button>
                     <Button
+                        variant={activeTab === 'map' ? 'solid' : 'ghost'}
+                        colorScheme={activeTab === 'map' ? 'red' : 'gray'}
+                        onClick={() => setActiveTab('map')}
+                        borderRadius="lg"
+                        size={{ base: "sm", md: "md" }}
+                        whiteSpace="nowrap"
+                    >
+                        Map View
+                    </Button>
+                    <Button
                         variant={activeTab === 'settings' ? 'solid' : 'ghost'}
                         colorScheme={activeTab === 'settings' ? 'red' : 'gray'}
                         onClick={() => setActiveTab('settings')}
@@ -751,6 +762,10 @@ export const AdminPage = () => {
 
                 {activeTab === 'users' && (
                     <UsersTab />
+                )}
+
+                {activeTab === 'map' && (
+                    <RiderMapTab />
                 )}
 
                 {activeTab === 'settings' && (

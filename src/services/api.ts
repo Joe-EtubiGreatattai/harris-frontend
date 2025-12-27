@@ -177,11 +177,11 @@ export const api = {
         return response.json();
     },
 
-    updateRider: async (id: string, riderData: any) => {
+    updateRider: async (id: string, data: any) => {
         const response = await fetch(`${API_URL}/riders/${id}`, {
             method: 'PATCH',
             headers: getHeaders(),
-            body: JSON.stringify(riderData)
+            body: JSON.stringify(data)
         });
         if (!response.ok) throw new Error("Failed to update rider");
         return response.json();
@@ -385,6 +385,18 @@ export const api = {
             body: JSON.stringify(data)
         });
         if (!response.ok) throw new Error("Failed to update user profile");
+        return response.json();
+    },
+
+    getSharingUsers: async () => {
+        const response = await fetch(`${API_URL}/users/active/sharing`, { headers: getHeaders() });
+        if (!response.ok) throw new Error("Failed to fetch sharing users");
+        return response.json();
+    },
+
+    getAssignedOrders: async (riderId: string) => {
+        const response = await fetch(`${API_URL}/orders/rider/${riderId}`, { headers: getHeaders() });
+        if (!response.ok) throw new Error("Failed to fetch assigned orders");
         return response.json();
     }
 };

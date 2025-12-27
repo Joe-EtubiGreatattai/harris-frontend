@@ -9,6 +9,7 @@ export interface UserProfile {
     address: string;
     phone?: string;
     favorites?: string[];
+    isLocationSharing?: boolean;
     savedAddresses?: {
         home?: string;
         work?: string;
