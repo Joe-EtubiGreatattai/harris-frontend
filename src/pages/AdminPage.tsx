@@ -14,6 +14,7 @@ import { TransactionsTab } from "../components/admin/TransactionsTab";
 import { UsersTab } from "../components/admin/UsersTab";
 import { RiderMapTab } from "../components/admin/RiderMapTab";
 import { socket } from "../services/socket";
+import { NewOrderAlert } from "../components/admin/NewOrderAlert";
 
 export const AdminPage = () => {
     const [orders, setOrders] = useState<any[]>([]);
@@ -29,6 +30,7 @@ export const AdminPage = () => {
     const [editingProduct, setEditingProduct] = useState<any>(null);
     const [searchQuery, setSearchQuery] = useState("");
     const [activeTab, setActiveTab] = useState<'orders' | 'products' | 'riders' | 'users' | 'map' | 'settings' | 'reviews' | 'campaign' | 'withdrawals' | 'transactions'>('orders');
+    const [newOrderPopup, setNewOrderPopup] = useState<any>(null);
     const navigate = useNavigate();
 
     // Derived state: Filter out Pending Payment orders from Admin view
@@ -53,6 +55,7 @@ export const AdminPage = () => {
         // Socket.IO Listeners
         socket.on('newOrder', (newOrder: any) => {
             setOrders((prevOrders) => [newOrder, ...prevOrders]);
+            setNewOrderPopup(newOrder); // Trigger the prominent alert
             toaster.create({
                 title: "New Order Received!",
                 description: `Order #${newOrder.orderId} - ₦${newOrder.total.toLocaleString()}`,
@@ -347,6 +350,14 @@ export const AdminPage = () => {
 
     return (
         <Box minH="100vh" bg="gray.50" p={{ base: 4, md: 8 }}>
+            <NewOrderAlert
+                order={newOrderPopup}
+                onClose={() => setNewOrderPopup(null)}
+                onView={(orderId) => {
+                    handleViewOrder(orderId);
+                    setNewOrderPopup(null);
+                }}
+            />
             <Flex justify="space-between" align={{ base: "start", md: "center" }} mb={8} direction={{ base: "column", md: "row" }} gap={4}>
                 <Text fontSize={{ base: "2xl", md: "3xl" }} fontWeight="bold">Admin Dashboard</Text>
                 <HStack w={{ base: "full", md: "auto" }} justify={{ base: "space-between", md: "flex-end" }}>
