@@ -398,5 +398,31 @@ export const api = {
         const response = await fetch(`${API_URL}/orders/rider/${riderId}`, { headers: getHeaders() });
         if (!response.ok) throw new Error("Failed to fetch assigned orders");
         return response.json();
+    },
+
+    // Tables
+    getTables: async () => {
+        const response = await fetch(`${API_URL}/tables`, { headers: getHeaders() });
+        if (!response.ok) throw new Error("Failed to fetch tables");
+        return response.json();
+    },
+
+    createTable: async (name: string, qrUrl?: string) => {
+        const response = await fetch(`${API_URL}/tables`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({ name, qrUrl })
+        });
+        if (!response.ok) throw new Error("Failed to create table");
+        return response.json();
+    },
+
+    deleteTable: async (id: string) => {
+        const response = await fetch(`${API_URL}/tables/${id}`, {
+            method: 'DELETE',
+            headers: getHeaders()
+        });
+        if (!response.ok) throw new Error("Failed to delete table");
+        return response.json();
     }
 };

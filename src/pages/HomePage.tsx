@@ -127,6 +127,25 @@ export const HomePage = () => {
         };
     }, [])
 
+    const [table, setTable] = useState<string | null>(null);
+
+    useEffect(() => {
+        const tableParam = searchParams.get('table');
+        if (tableParam) {
+            setTable(tableParam);
+        }
+    }, [searchParams]);
+
+    const handleCallWaiter = () => {
+        if (!table) return;
+        socket.emit('callWaiter', { table });
+        toaster.create({
+            title: "Waiter Called",
+            description: "A waiter has been notified and will be with you shortly.",
+            type: "success"
+        });
+    };
+
     return (
         <motion.div
             initial={{ opacity: 0 }}
@@ -144,6 +163,36 @@ export const HomePage = () => {
                         </Text>
                     </Box>
                 )}
+
+                {table && (
+                    <Box
+                        position="fixed"
+                        bottom={6}
+                        right={6}
+                        zIndex={1000}
+                        bg="blue.600"
+                        color="white"
+                        py={4}
+                        px={6}
+                        cursor="pointer"
+                        onClick={handleCallWaiter}
+                        textAlign="center"
+                        fontWeight="bold"
+                        borderRadius="full"
+                        boxShadow="lg"
+                        _hover={{ bg: "blue.700", transform: "scale(1.05)" }}
+                        _active={{ transform: "scale(0.95)" }}
+                        transition="all 0.2s"
+                        display="flex"
+                        alignItems="center"
+                        justifyContent="center"
+                        gap={3}
+                    >
+                        <span style={{ fontSize: '1.5rem' }}>🔔</span>
+                        <Text fontSize="lg">Call waiter to my Table</Text>
+                    </Box>
+                )}
+
                 <HomeHeader />
                 <SearchSection searchQuery={searchQuery} onSearchChange={setSearchQuery} />
 

@@ -1,7 +1,7 @@
 import { Box, Flex, Text, Button, VStack, HStack, Badge, Image, IconButton, Skeleton, Input } from "@chakra-ui/react";
 import { toaster } from "../components/ui/toaster";
 import { useState, useEffect } from "react";
-import { IoRefresh, IoAdd, IoPencil, IoTrash, IoPerson, IoMegaphone, IoWallet, IoSearch, IoPeople } from "react-icons/io5";
+import { IoRefresh, IoAdd, IoPencil, IoTrash, IoPerson, IoMegaphone, IoWallet, IoSearch, IoPeople, IoQrCode } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
 import { api } from "../services/api";
 import { ProductModal } from "../components/admin/ProductModal";
@@ -15,6 +15,8 @@ import { UsersTab } from "../components/admin/UsersTab";
 import { RiderMapTab } from "../components/admin/RiderMapTab";
 import { socket } from "../services/socket";
 import { NewOrderAlert } from "../components/admin/NewOrderAlert";
+import { QRCodeTab } from "../components/admin/QRCodeTab";
+import { WaiterAlert } from "../components/admin/WaiterAlert";
 
 export const AdminPage = () => {
     const [orders, setOrders] = useState<any[]>([]);
@@ -29,8 +31,9 @@ export const AdminPage = () => {
     const [selectedOrder, setSelectedOrder] = useState<any>(null); // For details view
     const [editingProduct, setEditingProduct] = useState<any>(null);
     const [searchQuery, setSearchQuery] = useState("");
-    const [activeTab, setActiveTab] = useState<'orders' | 'products' | 'riders' | 'users' | 'map' | 'settings' | 'reviews' | 'campaign' | 'withdrawals' | 'transactions'>('orders');
+    const [activeTab, setActiveTab] = useState<'orders' | 'products' | 'riders' | 'users' | 'map' | 'settings' | 'reviews' | 'campaign' | 'withdrawals' | 'transactions' | 'qr'>('orders');
     const [newOrderPopup, setNewOrderPopup] = useState<any>(null);
+    const [waiterCall, setWaiterCall] = useState<string | null>(null);
     const navigate = useNavigate();
 
     // Derived state: Filter out Pending Payment orders from Admin view
@@ -65,6 +68,12 @@ export const AdminPage = () => {
 
             // Play notification sound
             const audio = new Audio('/notification.mp3'); // Assuming file exists or just skipping audio for now if uncertain
+            audio.play().catch(e => console.log("Audio play failed", e));
+        });
+
+        socket.on('waiterCalled', (data: { table: string, time: Date }) => {
+            setWaiterCall(data.table);
+            const audio = new Audio('/notification.mp3');
             audio.play().catch(e => console.log("Audio play failed", e));
         });
 
@@ -159,6 +168,7 @@ export const AdminPage = () => {
 
         return () => {
             socket.off('newOrder');
+            socket.off('waiterCalled');
             socket.off('orderUpdated');
             socket.off('productUpdated');
             socket.off('riderCreated');
@@ -358,6 +368,10 @@ export const AdminPage = () => {
                     setNewOrderPopup(null);
                 }}
             />
+            <WaiterAlert
+                table={waiterCall || ""}
+                onClose={() => setWaiterCall(null)}
+            />
             <Flex justify="space-between" align={{ base: "start", md: "center" }} mb={8} direction={{ base: "column", md: "row" }} gap={4}>
                 <Text fontSize={{ base: "2xl", md: "3xl" }} fontWeight="bold">Admin Dashboard</Text>
                 <HStack w={{ base: "full", md: "auto" }} justify={{ base: "space-between", md: "flex-end" }}>
@@ -418,6 +432,19 @@ export const AdminPage = () => {
                         <HStack gap={2}>
                             <IoPeople />
                             <Text>Users</Text>
+                        </HStack>
+                    </Button>
+                    <Button
+                        variant={activeTab === 'qr' ? 'solid' : 'ghost'}
+                        colorScheme={activeTab === 'qr' ? 'red' : 'gray'}
+                        onClick={() => setActiveTab('qr')}
+                        borderRadius="lg"
+                        size={{ base: "sm", md: "md" }}
+                        whiteSpace="nowrap"
+                    >
+                        <HStack gap={2}>
+                            <IoQrCode />
+                            <Text>Tables / QR</Text>
                         </HStack>
                     </Button>
                     <Button
@@ -773,6 +800,10 @@ export const AdminPage = () => {
 
                 {activeTab === 'users' && (
                     <UsersTab />
+                )}
+
+                {activeTab === 'qr' && (
+                    <QRCodeTab />
                 )}
 
                 {activeTab === 'map' && (
