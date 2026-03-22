@@ -1,6 +1,9 @@
-import { Box, Flex, Text, VStack, Button, Badge, Image, SimpleGrid, Icon } from "@chakra-ui/react"
-import { IoArrowBack, IoPerson, IoLocation, IoCall, IoBicycle, IoTime, IoCalendar } from "react-icons/io5"
-import React from "react"
+import { Box, Flex, Text, VStack, Button, Badge, Image, SimpleGrid, Icon, HStack } from "@chakra-ui/react"
+import { IoArrowBack, IoPerson, IoLocation, IoCall, IoBicycle, IoTime, IoCalendar, IoDownloadOutline } from "react-icons/io5"
+import React, { useMemo, useRef, useState } from "react"
+import html2canvas from "html2canvas"
+import jsPDF from "jspdf"
+import { toaster } from "../ui/toaster"
 
 interface OrderDetailsViewProps {
     order: any;
@@ -10,13 +13,117 @@ interface OrderDetailsViewProps {
 export const OrderDetailsView = ({ order, onBack }: OrderDetailsViewProps) => {
     if (!order) return null;
 
+    const receiptRef = useRef<HTMLDivElement | null>(null)
+    const [isDownloadingReceipt, setIsDownloadingReceipt] = useState(false)
+
+    const orderMeta = useMemo(() => {
+        const createdAt = order.createdAt ? new Date(order.createdAt) : null
+        const deliveredAt = order.deliveredAt ? new Date(order.deliveredAt) : null
+
+        const deliveryFee = typeof order.deliveryFee === "number" ? order.deliveryFee : 0
+        const total = typeof order.total === "number" ? order.total : 0
+        const subtotal = Math.max(0, total - deliveryFee)
+
+        const isPaid = order.status && order.status !== "Pending Payment"
+
+        return { createdAt, deliveredAt, subtotal, deliveryFee, total, isPaid }
+    }, [order.createdAt, order.deliveredAt, order.deliveryFee, order.status, order.total])
+
+    const handleDownloadReceipt = async () => {
+        if (!receiptRef.current) return
+
+        setIsDownloadingReceipt(true)
+        try {
+            const canvas = await html2canvas(receiptRef.current, {
+                backgroundColor: "#ffffff",
+                scale: 2,
+                useCORS: true,
+            })
+
+            const pdf = new jsPDF({ orientation: "p", unit: "mm", format: "a4" })
+            const pageWidthMm = pdf.internal.pageSize.getWidth()
+            const pageHeightMm = pdf.internal.pageSize.getHeight()
+
+            const contentWidthMm = 80
+            const marginTopMm = 10
+            const marginBottomMm = 10
+            const contentXmm = (pageWidthMm - contentWidthMm) / 2
+
+            const mmPerPx = contentWidthMm / canvas.width
+            const pageContentHeightPx = Math.floor((pageHeightMm - marginTopMm - marginBottomMm) / mmPerPx)
+
+            let remainingHeightPx = canvas.height
+            let sourceY = 0
+            let pageIndex = 0
+
+            while (remainingHeightPx > 0) {
+                const sliceHeightPx = Math.min(pageContentHeightPx, remainingHeightPx)
+                const sliceCanvas = document.createElement("canvas")
+                sliceCanvas.width = canvas.width
+                sliceCanvas.height = sliceHeightPx
+
+                const ctx = sliceCanvas.getContext("2d")
+                if (!ctx) throw new Error("Unable to create receipt canvas context")
+
+                ctx.drawImage(
+                    canvas,
+                    0,
+                    sourceY,
+                    canvas.width,
+                    sliceHeightPx,
+                    0,
+                    0,
+                    canvas.width,
+                    sliceHeightPx
+                )
+
+                const sliceImgData = sliceCanvas.toDataURL("image/png")
+                const sliceHeightMm = sliceHeightPx * mmPerPx
+
+                if (pageIndex > 0) pdf.addPage()
+                pdf.addImage(sliceImgData, "PNG", contentXmm, marginTopMm, contentWidthMm, sliceHeightMm)
+
+                remainingHeightPx -= sliceHeightPx
+                sourceY += sliceHeightPx
+                pageIndex += 1
+            }
+
+            pdf.save(`receipt-${order.orderId}.pdf`)
+            toaster.create({
+                title: "Receipt downloaded",
+                description: `receipt-${order.orderId}.pdf`,
+            })
+        } catch (error) {
+            console.error(error)
+            toaster.create({
+                title: "Failed to generate receipt",
+                description: "Please try again.",
+            })
+        } finally {
+            setIsDownloadingReceipt(false)
+        }
+    }
+
     return (
         <Box bg="gray.50" minH="calc(100vh - 100px)">
             {/* Header */}
             <Flex mb={{ base: 4, md: 6 }} justify="space-between" align={{ base: "start", md: "center" }} direction={{ base: "column", md: "row" }} gap={4}>
-                <Button onClick={onBack} variant="ghost" gap={2} size={{ base: "sm", md: "md" }} p={{ base: 0, md: 2 }}>
-                    <IoArrowBack /> Back to Dashboard
-                </Button>
+                <HStack w={{ base: "full", md: "auto" }} justify={{ base: "space-between", md: "flex-start" }}>
+                    <Button onClick={onBack} variant="ghost" gap={2} size={{ base: "sm", md: "md" }} p={{ base: 0, md: 2 }}>
+                        <IoArrowBack /> Back to Dashboard
+                    </Button>
+                    <Button
+                        onClick={handleDownloadReceipt}
+                        colorScheme="blue"
+                        variant="solid"
+                        gap={2}
+                        size={{ base: "sm", md: "md" }}
+                        loading={isDownloadingReceipt}
+                        loadingText="Generating"
+                    >
+                        <IoDownloadOutline /> Receipt PDF
+                    </Button>
+                </HStack>
                 <Flex align="center" gap={3} w={{ base: "full", md: "auto" }} justify={{ base: "space-between", md: "flex-end" }}>
                     <Text fontWeight="bold" fontSize={{ base: "lg", md: "xl" }}>Order #{order.orderId}</Text>
                     <Badge
@@ -39,6 +146,121 @@ export const OrderDetailsView = ({ order, onBack }: OrderDetailsViewProps) => {
                     )}
                 </Flex>
             </Flex>
+
+            <Box
+                ref={receiptRef}
+                position="fixed"
+                left="-10000px"
+                top="0"
+                bg="white"
+                color="black"
+                w="320px"
+                p={4}
+                border="1px dashed"
+                borderColor="gray.400"
+                fontFamily="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace"
+                fontSize="12px"
+                lineHeight="1.35"
+            >
+                <VStack gap={2} align="stretch">
+                    <Box textAlign="center">
+                        <Text fontWeight="black" fontSize="16px" letterSpacing="1px">HARRIS PIZZA</Text>
+                        <Text fontSize="11px">ORDER RECEIPT</Text>
+                    </Box>
+
+                    <Text fontSize="11px" whiteSpace="pre-wrap">{"-".repeat(42)}</Text>
+
+                    <Box>
+                        <Flex justify="space-between">
+                            <Text>Receipt</Text>
+                            <Text>#{order.orderId}</Text>
+                        </Flex>
+                        <Flex justify="space-between">
+                            <Text>Date</Text>
+                            <Text>
+                                {orderMeta.createdAt
+                                    ? orderMeta.createdAt.toLocaleDateString() + " " + orderMeta.createdAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                                    : "N/A"}
+                            </Text>
+                        </Flex>
+                        <Flex justify="space-between">
+                            <Text>Status</Text>
+                            <Text>{order.status || "N/A"}</Text>
+                        </Flex>
+                        <Flex justify="space-between">
+                            <Text>Payment</Text>
+                            <Text>{orderMeta.isPaid ? "PAID" : "UNPAID"}</Text>
+                        </Flex>
+                        <Flex justify="space-between">
+                            <Text>Method</Text>
+                            <Text>{order.deliveryMethod || "Delivery"}</Text>
+                        </Flex>
+                    </Box>
+
+                    <Text fontSize="11px" whiteSpace="pre-wrap">{"-".repeat(42)}</Text>
+
+                    <Box>
+                        <Text fontWeight="bold" mb={1}>CUSTOMER</Text>
+                        <Text>{order.user?.email || "N/A"}</Text>
+                        <Text>{order.user?.phone || "N/A"}</Text>
+                        <Text>{order.user?.address || "N/A"}</Text>
+                    </Box>
+
+                    <Text fontSize="11px" whiteSpace="pre-wrap">{"-".repeat(42)}</Text>
+
+                    <Box>
+                        <Text fontWeight="bold" mb={1}>ITEMS</Text>
+                        <VStack gap={2} align="stretch">
+                            {order.items?.map((item: any, idx: number) => (
+                                <Box key={`${item.name}-${idx}`}>
+                                    <Flex justify="space-between" gap={3}>
+                                        <Text fontWeight="bold" flex="1" pr={2}>{String(item.name || "Item")}</Text>
+                                        <Text fontWeight="bold">{formatNaira((item.price || 0) * (item.quantity || 0))}</Text>
+                                    </Flex>
+                                    <Flex justify="space-between" color="gray.700">
+                                        <Text>
+                                            {String(item.size || "")} x{item.quantity || 0} @ {formatNaira(item.price || 0)}
+                                        </Text>
+                                        <Text />
+                                    </Flex>
+                                    {item.extras?.length > 0 && (
+                                        <Text color="gray.700">+ {item.extras.join(", ")}</Text>
+                                    )}
+                                    {item.note && (
+                                        <Text color="gray.700">Note: {String(item.note)}</Text>
+                                    )}
+                                </Box>
+                            ))}
+                        </VStack>
+                    </Box>
+
+                    <Text fontSize="11px" whiteSpace="pre-wrap">{"-".repeat(42)}</Text>
+
+                    <Box>
+                        <Flex justify="space-between">
+                            <Text>Subtotal</Text>
+                            <Text>{formatNaira(orderMeta.subtotal)}</Text>
+                        </Flex>
+                        <Flex justify="space-between">
+                            <Text>Delivery</Text>
+                            <Text>{formatNaira(orderMeta.deliveryFee)}</Text>
+                        </Flex>
+                        <Flex justify="space-between" fontWeight="black" mt={2}>
+                            <Text>TOTAL</Text>
+                            <Text>{formatNaira(orderMeta.total)}</Text>
+                        </Flex>
+                    </Box>
+
+                    <Text fontSize="11px" whiteSpace="pre-wrap">{"-".repeat(42)}</Text>
+
+                    <Box textAlign="center">
+                        <Text fontWeight="bold">THANK YOU!</Text>
+                        <Text fontSize="11px">
+                            Generated {new Date().toLocaleDateString()} {new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                        </Text>
+                    </Box>
+                </VStack>
+            </Box>
 
             {/* Timeline Section */}
             <Box bg="white" p={6} borderRadius="xl" shadow="sm" mb={8}>
@@ -223,3 +445,8 @@ const calculateDuration = (start: string, end: string) => {
     }
     return `${minutes} mins`;
 };
+
+const formatNaira = (amount: number) => {
+    const safeAmount = typeof amount === "number" && Number.isFinite(amount) ? amount : 0
+    return `₦${safeAmount.toLocaleString()}`
+}
