@@ -196,7 +196,7 @@ export const CartPage = () => {
                                 _hover={{ bg: "red.600", transform: "scale(1.05)" }}
                                 _active={{ transform: "scale(0.95)" }}
                                 shadow="xl"
-                                onClick={() => navigate('/')}
+                                onClick={() => window.location.href = 'https://resturants-sooty.vercel.app/?vendor=Harris%20Pizza'}
                                 transition="all 0.2s"
                             >
                                 Browse Menu

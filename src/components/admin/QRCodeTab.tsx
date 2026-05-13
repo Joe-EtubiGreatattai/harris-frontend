@@ -68,7 +68,7 @@ export const QRCodeTab = () => {
     };
 
     const prepareDownload = (table: any) => {
-        const url = `${baseUrl}/?table=${encodeURIComponent(table.name)}`;
+        const url = `${baseUrl}/?vendor=Harris Pizza&table=${encodeURIComponent(table.name)}`;
         setQrToDownload({ name: table.name, url });
     };
 

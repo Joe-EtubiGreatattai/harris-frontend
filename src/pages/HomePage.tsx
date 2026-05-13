@@ -1,5 +1,6 @@
 import { Box, Text } from "@chakra-ui/react"
 import { useState, useEffect } from "react"
+import { AnimatePresence, motion as m } from "framer-motion"
 import { HomeHeader } from "../components/home/HomeHeader"
 import { SearchSection } from "../components/home/SearchSection"
 import { FavoritesSection } from "../components/home/FavoritesSection"
@@ -29,7 +30,10 @@ const itemVariants = {
     show: { opacity: 1, y: 0 }
 }
 
+const NEW_MENU_URL = "https://resturants-sooty.vercel.app/?vendor=Harris Pizza"
+
 export const HomePage = () => {
+    const [showRedirectModal, setShowRedirectModal] = useState(false)
     const [selectedCategory, setSelectedCategory] = useState("Pizza")
     const [searchQuery, setSearchQuery] = useState("")
     const [products, setProducts] = useState<Product[]>(() => {
@@ -136,6 +140,22 @@ export const HomePage = () => {
         }
     }, [searchParams]);
 
+    useEffect(() => {
+        const dismissed = sessionStorage.getItem('redirectModalDismissed')
+        if (!dismissed) {
+            setShowRedirectModal(true)
+        }
+    }, [])
+
+    const handleGoToNewMenu = () => {
+        window.location.href = NEW_MENU_URL
+    }
+
+    const handleDismissModal = () => {
+        sessionStorage.setItem('redirectModalDismissed', 'true')
+        setShowRedirectModal(false)
+    }
+
     const handleCallWaiter = () => {
         if (!table) return;
         socket.emit('callWaiter', { table });
@@ -147,6 +167,130 @@ export const HomePage = () => {
     };
 
     return (
+        <>
+        <AnimatePresence>
+            {showRedirectModal && (
+                <m.div
+                    key="redirect-modal-overlay"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    style={{
+                        position: "fixed",
+                        inset: 0,
+                        zIndex: 9999,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        background: "rgba(0,0,0,0.65)",
+                        backdropFilter: "blur(4px)",
+                        padding: "1rem",
+                    }}
+                >
+                    <m.div
+                        key="redirect-modal-card"
+                        initial={{ scale: 0.85, opacity: 0, y: 40 }}
+                        animate={{ scale: 1, opacity: 1, y: 0 }}
+                        exit={{ scale: 0.85, opacity: 0, y: 40 }}
+                        transition={{ type: "spring", stiffness: 280, damping: 24 }}
+                        style={{
+                            background: "white",
+                            borderRadius: "1.5rem",
+                            maxWidth: "440px",
+                            width: "100%",
+                            padding: "2.5rem 2rem",
+                            textAlign: "center",
+                            boxShadow: "0 25px 60px rgba(0,0,0,0.35)",
+                            position: "relative",
+                        }}
+                    >
+                        {/* Icon */}
+                        <div style={{ fontSize: "4rem", marginBottom: "0.75rem" }}>🍕</div>
+
+                        {/* Badge */}
+                        <div style={{
+                            display: "inline-block",
+                            background: "linear-gradient(135deg, #e53e3e, #fc8181)",
+                            color: "white",
+                            fontSize: "0.7rem",
+                            fontWeight: 700,
+                            letterSpacing: "0.1em",
+                            textTransform: "uppercase",
+                            padding: "0.25rem 0.85rem",
+                            borderRadius: "9999px",
+                            marginBottom: "1rem",
+                        }}>
+                            New Ordering Experience
+                        </div>
+
+                        <h2 style={{
+                            fontSize: "1.6rem",
+                            fontWeight: 800,
+                            color: "#1a202c",
+                            marginBottom: "0.75rem",
+                            lineHeight: 1.25,
+                        }}>
+                            We&apos;ve moved to a new menu!
+                        </h2>
+
+                        <p style={{
+                            fontSize: "1rem",
+                            color: "#4a5568",
+                            marginBottom: "2rem",
+                            lineHeight: 1.6,
+                        }}>
+                            Our new ordering page is faster and easier to use.
+                            Click below to visit the updated menu and place your order.
+                        </p>
+
+                        {/* CTA Button */}
+                        <button
+                            onClick={handleGoToNewMenu}
+                            style={{
+                                display: "block",
+                                width: "100%",
+                                padding: "0.9rem 1.5rem",
+                                background: "linear-gradient(135deg, #e53e3e, #c53030)",
+                                color: "white",
+                                fontWeight: 700,
+                                fontSize: "1.05rem",
+                                border: "none",
+                                borderRadius: "0.9rem",
+                                cursor: "pointer",
+                                marginBottom: "0.85rem",
+                                boxShadow: "0 4px 15px rgba(229,62,62,0.45)",
+                                transition: "transform 0.15s, box-shadow 0.15s",
+                            }}
+                            onMouseEnter={e => {
+                                (e.currentTarget as HTMLButtonElement).style.transform = "translateY(-2px)"
+                                ;(e.currentTarget as HTMLButtonElement).style.boxShadow = "0 8px 25px rgba(229,62,62,0.5)"
+                            }}
+                            onMouseLeave={e => {
+                                (e.currentTarget as HTMLButtonElement).style.transform = "translateY(0)"
+                                ;(e.currentTarget as HTMLButtonElement).style.boxShadow = "0 4px 15px rgba(229,62,62,0.45)"
+                            }}
+                        >
+                            🛒 Go to New Menu &rarr;
+                        </button>
+
+                        {/* Dismiss link */}
+                        <button
+                            onClick={handleDismissModal}
+                            style={{
+                                background: "none",
+                                border: "none",
+                                color: "#a0aec0",
+                                fontSize: "0.85rem",
+                                cursor: "pointer",
+                                textDecoration: "underline",
+                            }}
+                        >
+                            No thanks, stay on this page
+                        </button>
+                    </m.div>
+                </m.div>
+            )}
+        </AnimatePresence>
         <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -215,5 +359,6 @@ export const HomePage = () => {
                 )}
             </Box>
         </motion.div>
+        </>
     )
 }
